@@ -1,0 +1,1971 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>9o7chat</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #ffff;
+            --primary-dark: #ffff;
+            --secondary: #ffff;
+            --dark: #0a0a0a;
+            --dark-light: #1e1e1e;
+            --light: #ffffff;
+            --danger: #ff1744;
+            --success: #00c853;
+            --message-sent: rgba(41, 98, 255, 0.25);
+            --message-received: rgba(32, 32, 32, 0.8);
+            --input-bg: rgba(255, 255, 255, 0.1);
+            --image-btn: #FF2121;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tajawal', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: var(--dark);
+            color: var(--light);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle var(--duration) infinite ease-in-out;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .page {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            padding: 1rem;
+        }
+
+        .active-page {
+            display: flex;
+        }
+
+        .auth-container {
+            max-width: 500px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .auth-box {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid var(--primary);
+            box-shadow: 0 0 20px rgba(41, 98, 255, 0.2);
+        }
+
+        .auth-title {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            font-size: 1.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--light);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--input-bg);
+            border: none;
+            border-radius: 8px;
+            color: var(--light);
+            font-size: 1rem;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .password-container {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(41, 98, 255, 0.1);
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-2 {
+            margin-top: 1rem;
+        }
+
+        .terms-link {
+            color: var(--danger);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .chat-header {
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--primary);
+        }
+
+        .chat-title {
+            font-size: 1.3rem;
+            color: var(--primary);
+        }
+
+
+        .settings-btn {
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+        }
+
+        .message {
+            padding: 12px 15px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            position: relative;
+            animation: messageIn 0.3s ease-out;
+            word-break: break-word;
+            min-width: 120px;
+            max-width: 85%;
+            width: fit-content;
+        }
+
+        @keyframes messageIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .sent {
+            background: var(--message-sent);
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .received {
+            background: var(--message-received);
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-user {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            cursor: pointer;
+        }
+
+        .message-user-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            margin-right: 8px;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+        }
+
+        .message-user-name {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+
+        .message-text {
+            margin: 8px 0;
+            line-height: 1.5;
+            max-width: 400px;
+            white-space: pre-wrap;
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            text-align: left;
+        }
+
+        .message-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin-top: 8px;
+            cursor: pointer;
+            object-fit: contain;
+        }
+
+        .message-input-container {
+            display: flex;
+            gap: 8px;
+            padding: 1rem;
+            border-radius: 8px;
+            align-items: center;
+            width: 100%;
+            background: transparent;
+            margin-top: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: none;
+            background: var(--input-bg);
+            color: var(--light);
+            resize: none;
+            max-height: 120px;
+            min-height: 50px;
+            width: 100%;
+        }
+
+        .send-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+
+        .send-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .image-btn {
+            background: var(--image-btn);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+
+        .image-btn:hover {
+            background: #d11a1a;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 2rem;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 100%;
+            border: 1px solid var(--primary);
+            box-shadow: 0 0 30px rgba(41, 98, 255, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-title {
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .terms-content {
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+
+        .terms-item {
+            margin-bottom: 1rem;
+            padding-right: 15px;
+            position: relative;
+        }
+
+        .terms-item::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0.7em;
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+        .prophet-salutation {
+            color: var(--danger);
+            font-weight: bold;
+            margin: 1.5rem 0;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+        }
+
+        .checkbox-container input {
+            margin-left: 10px;
+        }
+
+        .profile-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .profile-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 3px solid var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .profile-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-status {
+            color: var(--primary);
+            background: rgba(41, 98, 255, 0.1);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .profile-form {
+            margin-top: 1.5rem;
+        }
+
+        .profile-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 1.5rem;
+        }
+
+        .profile-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .profile-btn.cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .profile-btn.save {
+            background: var(--primary);
+            color: white;
+        }
+
+        .user-image-large {
+            width: 150px;
+            height: 150px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 3px solid var(--primary);
+            margin: 0 auto 1.5rem;
+            display: block;
+        }
+
+        .code-block {
+            position: relative;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        pre {
+            margin: 0;
+            padding: 1rem;
+            background: #1e1e1e;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        
+        .message-actions {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            display: none;
+        }
+
+        .message:hover .message-actions {
+            display: block;
+        }
+
+        .delete-message-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .delete-message-btn:hover {
+            background: #d11a1a;
+        }
+
+        .code-toolbar {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            z-index: 1;
+        }
+
+        .copy-code-btn {
+            background: rgba(0,0,0,0.7);
+            border: none;
+            color: var(--primary);
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .upload-success {
+            color: var(--success);
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .settings-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 1.5rem;
+        }
+
+        .settings-option {
+            padding: 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .settings-option:hover {
+            background: rgba(41, 98, 255, 0.1);
+        }
+
+        .settings-option i {
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .password-modal-content {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 2rem;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 100%;
+            border: 1px solid var(--primary);
+            box-shadow: 0 0 30px rgba(41, 98, 255, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .auth-box {
+                padding: 1.5rem;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+            
+            .modal-content {
+                padding: 1.5rem;
+            }
+            
+            .message-input-container {
+                padding: 0.8rem;
+            }
+            
+            .send-btn, .image-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .message-input-container {
+                max-width: 800px;
+                margin: 0 auto;
+            }
+        }
+        
+        @media (min-width: 768px) and (max-width: 1023px) {
+          .chat-header {
+            padding: 1.5rem;
+          }
+          .messages-container {
+            padding: 1.5rem;
+          }
+          .message-input-container {
+            padding: 1.2rem;
+          }
+          .send-btn, .image-btn {
+            width: 40px;
+            height: 40px;
+          }
+        }
+
+        .messages-container {
+          margin-bottom: 0;
+          padding-bottom: 60px;
+        }
+
+        .message-input-container {
+          position: sticky;
+          bottom: 0;
+          background: rgba(0,0,0,0.8);
+          padding: 1rem;
+          z-index: 10;
+        }
+
+        .image-preview-container {
+            display: none;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+        }
+
+        .remove-image-btn {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .loading-spinner {
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top: 5px solid var(--primary);
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .register-container {
+            max-height: 90vh;
+            overflow-y: auto;
+            padding-bottom: 20px;
+        }
+
+        .profile-image-container {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            border: 2px solid var(--primary);
+            transition: all 0.3s;
+        }
+
+        .profile-image-container:hover {
+            border-color: var(--secondary);
+            transform: scale(1.05);
+        }
+
+        .profile-image-icon {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .upload-indicator {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: var(--primary);
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.7rem;
+        }
+
+        .profile-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 25px;
+            height: 25px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            animation: slideUp 0.3s ease-out;
+            z-index: 1001;
+        }
+
+        .toast.error {
+            background: var(--danger);
+        }
+
+        @keyframes slideUp {
+            from { bottom: -50px; opacity: 0; }
+            to { bottom: 20px; opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- صفحة تسجيل الدخول -->
+    <div class="page active-page" id="loginPage">
+        <div class="auth-container">
+            <div class="auth-box">
+                <h1 class="auth-title">9o7chat</h1>
+                
+                <div class="form-group">
+                    <label for="loginUsername" class="form-label">اسم المستخدم</label>
+                    <input type="text" id="loginUsername" class="form-input" placeholder="ادخل اسم المستخدم" autocomplete="off">
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginPassword" class="form-label">كلمة السر</label>
+                    <div class="password-container">
+                        <input type="password" id="loginPassword" class="form-input" placeholder="ادخل كلمة السر" autocomplete="off">
+                        <i class="fas fa-eye toggle-password" onclick="togglePassword('loginPassword')"></i>
+                    </div>
+                </div>
+                
+                <button class="btn" onclick="login()">تسجيل الدخول</button>
+                
+                <p class="text-center mt-2">
+                    ليس لديك حساب؟ 
+                    <span class="terms-link" onclick="showPage('registerPage')">إنشاء حساب جديد</span>
+                </p>
+                
+                <p class="terms-link text-center mt-2" onclick="showModal('termsModal')">
+                    شروط استخدام التطبيق
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- صفحة إنشاء حساب -->
+    <div class="page" id="registerPage">
+        <div class="auth-container register-container">
+            <div class="auth-box">
+                <h1 class="auth-title">إنشاء حساب جديد</h1>
+                
+                <div class="form-group">
+                    <label for="regUsername" class="form-label">اسم المستخدم</label>
+                    <input type="text" id="regUsername" class="form-input" placeholder="ادخل اسم المستخدم (3-20 حرف)" autocomplete="off">
+                </div>
+                
+                <div class="form-group">
+                    <label for="regPassword" class="form-label">كلمة السر</label>
+                    <div class="password-container">
+                        <input type="password" id="regPassword" class="form-input" placeholder="ادخل كلمة السر (6 أحرف على الأقل)" autocomplete="new-password">
+                        <i class="fas fa-eye toggle-password" onclick="togglePassword('regPassword')"></i>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="regConfirmPassword" class="form-label">تأكيد كلمة السر</label>
+                    <div class="password-container">
+                        <input type="password" id="regConfirmPassword" class="form-input" placeholder="أعد إدخال كلمة السر" autocomplete="new-password">
+                        <i class="fas fa-eye toggle-password" onclick="togglePassword('regConfirmPassword')"></i>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="regStatus" class="form-label">الحالة (اختياري)</label>
+                    <input type="text" id="regStatus" class="form-input" placeholder="ماذا تفعل الآن؟" autocomplete="off">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">الصورة الشخصية</label>
+                    <div style="display: flex; justify-content: center;">
+                        <div style="width: 120px; height: 120px; position: relative;">
+                            <img id="regImagePreview" src="" style="width: 100%; height: 100%; border-radius: 8px; object-fit: cover; border: 3px solid var(--primary); display: none;">
+                            <div id="regImagePlaceholder" style="width: 100%; height: 100%; border-radius: 8px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 3rem; color: rgba(255,255,255,0.3);">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <input type="file" id="regImage" accept="image/*" style="display: none;" onchange="previewImage(this, 'regImagePreview', 'regImagePlaceholder')">
+                            <button onclick="document.getElementById('regImage').click()" style="position: absolute; bottom: 0; right: 0; background: var(--primary); color: white; border: none; width: 30px; height: 30px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="uploadSuccess" class="upload-success">
+                        <i class="fas fa-check-circle"></i> تم تحميل الصورة بنجاح
+                    </div>
+                </div>
+                
+                <button class="btn" onclick="register()">إنشاء حساب</button>
+                
+                <p class="text-center mt-2">
+                    لديك حساب بالفعل؟ 
+                    <span class="terms-link" onclick="showPage('loginPage')">تسجيل الدخول</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- صفحة الدردشة -->
+    <div class="page" id="chatPage">
+        <div class="chat-header">
+            <!-- زر الصورة الشخصية -->
+            <div class="profile-image-container" onclick="document.getElementById('profileImageInput').click()">
+                <img id="currentProfileImage" src="https://f.top4top.io/p_3410530mv1.jpg" class="profile-image-icon">
+                <div class="upload-indicator">
+                    <i class="fas fa-camera"></i>
+                </div>
+                <div class="profile-loading" id="profileLoading"></div>
+            </div>
+            
+            <div class="chat-title">9o7chat</div>
+            
+            <button class="settings-btn" onclick="showModal('settingsModal')">
+                <i class="fas fa-cog"></i>
+            </button>
+        </div>
+        
+        <div class="messages-container" id="messagesContainer">
+            <!-- الرسائل تظهر هنا -->
+        </div>
+        
+        <div class="image-preview-container" id="imagePreviewContainer">
+            <button class="remove-image-btn" onclick="removeImagePreview()">
+                <i class="fas fa-times"></i>
+            </button>
+            <img id="imagePreview" class="image-preview">
+        </div>
+        
+        <div class="message-input-container">
+            <button class="send-btn" onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+            <textarea class="message-input" id="messageInput" placeholder="اكتب رسالتك..." rows="1"></textarea>
+            <button class="image-btn" onclick="document.getElementById('messageImage').click()">
+                <i class="fas fa-image"></i>
+                <input type="file" id="messageImage" accept="image/*" style="display: none;" onchange="handleImageUpload()">
+            </button>
+        </div>
+        
+        <!-- حقل إدخال الملف المخفي لصورة البروفايل -->
+        <input type="file" id="profileImageInput" accept="image/*" style="display: none;" onchange="handleProfileImageUpload(this.files[0])">
+    </div>
+
+    <!-- نافذة الشروط -->
+    <div class="modal" id="termsModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="hideModal('termsModal')">&times;</button>
+            <h2 class="modal-title">شروط استخدام التطبيق</h2>
+            
+            <div class="terms-content">
+                <div class="terms-item">1. ممنوع إرسال الكلمات الإباحية أو غير الأخلاقية تحت أي ظرف.</div>
+                <div class="terms-item">2. ممنوع استخدام الأكواد الخطيرة المنشورة في الجروب ضد أي شخص بريء أو ليس له ذنب.</div>
+                <div class="terms-item">3. هذا التطبيق مخصص فقط لتعلّم الوقاية والأمان ضد محاولات الاختراق والهاكرز.</div>
+                <div class="terms-item">4. أُخلي مسؤوليتي تمامًا من أي استخدام خاطئ للدردشة أو استغلال أي طريقة اختراق ضد أي شخص بريء.</div>
+                <div class="terms-item">5. تم تصميم هذا التطبيق بالكامل عبر مهارة VIBE CODEING بواسطة المطور Kimo، بدون كتابة سطر كود واحد.</div>
+                
+                <div class="prophet-salutation">صلّى على النبي</div>
+                
+                <div class="checkbox-container">
+                    <input type="checkbox" id="agreeTerms">
+                    <label for="agreeTerms">أوافق على الشروط والأحكام وأتعهد بالالتزام بها</label>
+                </div>
+            </div>
+            
+            <button class="btn" onclick="acceptTerms()">موافق</button>
+        </div>
+    </div>
+
+    <!-- نافذة الإعدادات -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="hideModal('settingsModal')">&times;</button>
+            <h2 class="modal-title">إعدادات الحساب</h2>
+            
+            <div class="profile-header">
+                <img id="settingsProfileImage" src="" class="profile-image">
+                <div class="profile-name" id="settingsUsername"></div>
+                <div class="profile-status" id="settingsStatus"></div>
+            </div>
+            
+            <div class="settings-options">
+                <div class="settings-option" onclick="showModal('profileModal')">
+                    <i class="fas fa-user-edit"></i>
+                    <span>تعديل الملف الشخصي</span>
+                </div>
+                
+                <div class="settings-option" onclick="showModal('passwordModal')">
+                    <i class="fas fa-key"></i>
+                    <span>تغيير كلمة السر</span>
+                </div>
+                
+                <div class="settings-option" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>تسجيل الخروج</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تعديل الملف الشخصي -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="hideModal('profileModal')">&times;</button>
+            <h2 class="modal-title">تعديل الملف الشخصي</h2>
+            
+            <div class="profile-form">
+                <div class="form-group">
+                    <label for="profileUsername" class="form-label">اسم المستخدم</label>
+                    <input type="text" id="profileUsername" class="form-input" placeholder="اسم المستخدم">
+                </div>
+                
+                <div class="form-group">
+                    <label for="profileStatus" class="form-label">الحالة</label>
+                    <input type="text" id="profileStatus" class="form-input" placeholder="الحالة الجديدة">
+                </div>
+            </div>
+            
+            <div class="profile-actions">
+                <button class="profile-btn cancel" onclick="hideModal('profileModal')">إلغاء</button>
+                <button class="profile-btn save" onclick="updateProfile()">حفظ التغييرات</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تغيير كلمة السر -->
+    <div class="modal" id="passwordModal">
+        <div class="password-modal-content">
+            <button class="close-modal" onclick="hideModal('passwordModal')">&times;</button>
+            <h2 class="modal-title">تغيير كلمة السر</h2>
+            
+            <div class="profile-form">
+                <div class="form-group">
+                    <label for="currentPassword" class="form-label">كلمة السر الحالية</label>
+                    <div class="password-container">
+                        <input type="password" id="currentPassword" class="form-input" placeholder="أدخل كلمة السر الحالية">
+                        <i class="fas fa-eye toggle-password" onclick="togglePassword('currentPassword')"></i>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="newPassword" class="form-label">كلمة السر الجديدة</label>
+                    <div class="password-container">
+                        <input type="password" id="newPassword" class="form-input" placeholder="كلمة السر الجديدة">
+                        <i class="fas fa-eye toggle-password" onclick="togglePassword('newPassword')"></i>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmNewPassword" class="form-label">تأكيد كلمة السر الجديدة</label>
+                    <div class="password-container">
+                        <input type="password" id="confirmNewPassword" class="form-input" placeholder="أعد إدخال كلمة السر الجديدة">
+                        <i class="fas fa-eye toggle-password" onclick="togglePassword('confirmNewPassword')"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="profile-actions">
+                <button class="profile-btn cancel" onclick="hideModal('passwordModal')">إلغاء</button>
+                <button class="profile-btn save" onclick="changePassword()">تغيير كلمة السر</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة عرض المستخدم -->
+    <div class="modal" id="userModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="hideModal('userModal')">&times;</button>
+            
+            <img id="userModalImage" src="" class="user-image-large">
+            <h2 class="profile-name text-center" id="userModalName"></h2>
+            <div class="profile-status text-center" id="userModalStatus"></div>
+            <div class="text-center mt-2" id="userModalLastSeen"></div>
+        </div>
+    </div>
+
+    <script>
+        // تهيئة Firebase مع بياناتك
+        const firebaseConfig = {
+            apiKey: "AIzaSyAJq22IumpJkfeF104McYmVrIg20kyOuUA",
+            authDomain: "o7chat.firebaseapp.com",
+            databaseURL: "https://o7chat-default-rtdb.firebaseio.com",
+            projectId: "o7chat",
+            storageBucket: "o7chat.firebasestorage.app",
+            messagingSenderId: "213934542014",
+            appId: "1:213934542014:web:8b56f18e840d8c1e86a2ef"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const storage = firebase.storage();
+        
+        // متغيرات التطبيق
+        let currentUser = null;
+        let currentUserData = null;
+        let selectedImageFile = null;
+        let messageImageFile = null;
+        let messagesRef = null;
+        let usersRef = null;
+        let usersCache = {};
+        
+        // الكلمات المحظورة
+        const bannedWords = [
+  'احا', 'كسمك', 'تيز', 'تيزك', 'طيزك', 'ت ي ز ك', 'ط ي ز ك',
+  'امك', 'ابوك', 'كس اختك', 'اختك', 'متناكه', 'منيوكه',
+  'عاهره', 'نيك', 'طيزي', 'تيزي', 'يا ابن القحبة',
+  'القحبة', 'القحبه', 'فشخ', 'بز', 'xxx', 'xnxx', 'porn', 'سكس',
+  'سكس مصري', 'شرموطه', 'شرميط', 'قتل', 'عمك', 'خالتهم',
+  'مهبل', 'فرج', 'بظر', 'كسة', 'طيزك الكبير',
+  'كسمها', 'كسمهم', 'كسمها الكبير', 'عاهرات', 'قحابات',
+  'شراميطات', 'خولات', 'منيوكات', 'هجيب منك عيال', 'زب كبير', 'زب صغير',
+  'عيرهم', 'عيرها', 'متناكين', 'متناكات', 'ساقوط', 'ساقطة',
+  'ولاد الحرام', 'ولاد الزنا', 'قرد افريقي', 'زنديق',
+  'جنس', 'عرصان', 'عرصات', 'أعرابي حقير',
+  'بائع fuck', 'FUCK', 'نطوة', 'مبيض محارم', 'مبيض بنات',
+  'مبيض خوات', 'شاذ', 'شاذة', 'لوطي', 'لواط', 'زنا',
+  'NSFW', 'Horny', 'Porno', 'Pornography', 'Sex', 'Damn',
+  'عرص', 'يلعن دينك', 'يلعن', 'الحس', 'احطو', 'ادخلوا',
+  'احشرو', 'بعبوص', 'بعبوس', 'الحسي', 'مص', 'مصي',
+  'حطوهولي', 'دخلهولي', 'اشخرلوا', 'اشخريله', 'شخره',
+  'سب الدين', 'خخخخخخخخخخ',
+  'ينيك', 'نكني', 'نكونا', 'نيكو', 'افشخهولي', 'مولع',
+  'بيحرق', 'بيحرقني', 'كسي احمر',
+
+  // الكلمات الجديدة المضافة الآن:
+  'كس', 'خول', 'متناك', 'متناكه', 'كسكو', 'كسك'
+];
+        
+        // عند تحميل الصفحة
+        window.onload = function() {
+            createStars();
+            checkAuthState();
+            setupEventListeners();
+            clearInputs();
+            initUsersCache();
+        };
+        
+        // إنشاء النجوم المتحركة
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            starsContainer.innerHTML = '';
+            
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                const size = Math.random() * 3;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.setProperty('--duration', `${5 + Math.random() * 10}s`);
+                star.style.animationDelay = `${Math.random() * 5}s`;
+                
+                starsContainer.appendChild(star);
+            }
+        }
+        
+        // تهيئة ذاكرة التخزين المؤقت للمستخدمين
+        function initUsersCache() {
+            database.ref('users').on('value', (snapshot) => {
+                const users = snapshot.val();
+                if (users) {
+                    Object.keys(users).forEach(userId => {
+                        usersCache[userId] = users[userId];
+                    });
+                    
+                    // تحديث صورة المستخدم الحالي إذا كانت موجودة في الكاش
+                    if (currentUser && usersCache[currentUser.id]) {
+                        updateProfileImage(usersCache[currentUser.id].profileImage);
+                    }
+                }
+            });
+        }
+        
+        // مسح حقول الإدخال عند التحميل
+        function clearInputs() {
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('regUsername').value = '';
+            document.getElementById('regPassword').value = '';
+            document.getElementById('regConfirmPassword').value = '';
+            document.getElementById('regStatus').value = '';
+        }
+        
+        // التحقق من حالة المصادقة
+        function checkAuthState() {
+            const savedUser = localStorage.getItem('9o7chatUser');
+            
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                loadUserData(currentUser.id);
+                showPage('chatPage');
+                initChat();
+            } else {
+                showPage('loginPage');
+            }
+        }
+        
+        // إعداد مستمعات الأحداث
+        function setupEventListeners() {
+            document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') login();
+            });
+            
+            document.getElementById('regConfirmPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') register();
+            });
+            
+            document.getElementById('messageInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            document.getElementById('messageInput').addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        }
+        
+        // تسجيل الدخول
+        function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            
+            if (!username || !password) {
+                showToast('الرجاء إدخال اسم المستخدم وكلمة السر', 'error');
+                return;
+            }
+            
+            showLoading();
+            
+            database.ref('users').orderByChild('username').equalTo(username).once('value')
+                .then(snapshot => {
+                    if (!snapshot.exists()) {
+                        throw new Error('اسم المستخدم أو كلمة السر غير صحيحة');
+                    }
+                    
+                    const users = snapshot.val();
+                    const userId = Object.keys(users)[0];
+                    const user = users[userId];
+                    
+                    if (user.password !== password) {
+                        throw new Error('اسم المستخدم أو كلمة السر غير صحيحة');
+                    }
+                    
+                    currentUser = {
+                        id: userId,
+                        username: user.username,
+                        status: user.status || '',
+                        profileImage: user.profileImage || ''
+                    };
+                    
+                    localStorage.setItem('9o7chatUser', JSON.stringify(currentUser));
+                    
+                    database.ref('users/' + userId).update({
+                        isOnline: true,
+                        lastSeen: null
+                    });
+                    
+                    loadUserData(userId);
+                    showPage('chatPage');
+                    initChat();
+                })
+                .catch(error => {
+                    showToast(error.message, 'error');
+                    console.error('Login error:', error);
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+        }
+        
+        // إنشاء حساب جديد
+        function register() {
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value.trim();
+            const confirmPassword = document.getElementById('regConfirmPassword').value.trim();
+            const status = document.getElementById('regStatus').value.trim();
+            const imageFile = document.getElementById('regImage').files[0];
+            
+            if (!username || !password || !confirmPassword) {
+                showToast('الرجاء ملء جميع الحقول المطلوبة', 'error');
+                return;
+            }
+            
+            if (username.length < 3 || username.length > 20) {
+                showToast('اسم المستخدم يجب أن يكون بين 3 و20 حرفاً', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showToast('كلمة السر يجب أن تكون 6 أحرف على الأقل', 'error');
+                return;
+            }
+            
+            if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+                showToast('كلمة السر يجب أن تحتوي على أحرف وأرقام إنجليزية', 'error');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showToast('كلمة السر غير متطابقة', 'error');
+                return;
+            }
+            
+            showLoading();
+            
+            const uploadSuccess = document.getElementById('uploadSuccess');
+            uploadSuccess.style.display = 'none';
+            
+            database.ref('users').orderByChild('username').equalTo(username).once('value')
+                .then(snapshot => {
+                    if (snapshot.exists()) {
+                        throw new Error('اسم المستخدم موجود مسبقاً');
+                    }
+                    
+                    if (imageFile) {
+                        const uniqueFileName = Date.now() + '_' + imageFile.name;
+                        return uploadImage(imageFile, uniqueFileName);
+                    } else {
+                        return Promise.resolve('');
+                    }
+                })
+                .then(imageUrl => {
+                    const userId = database.ref('users').push().key;
+                    
+                    return database.ref('users/' + userId).set({
+                        username: username,
+                        password: password,
+                        status: status,
+                        profileImage: imageUrl,
+                        isOnline: true,
+                        joinedAt: firebase.database.ServerValue.TIMESTAMP,
+                        lastSeen: null
+                    }).then(() => ({userId, imageUrl}));
+                })
+                .then(({userId, imageUrl}) => {
+                    currentUser = {
+                        id: userId,
+                        username: username,
+                        status: status,
+                        profileImage: imageUrl || ''
+                    };
+                    
+                    localStorage.setItem('9o7chatUser', JSON.stringify(currentUser));
+                    
+                    if (imageUrl) {
+                        uploadSuccess.style.display = 'block';
+                    }
+                    
+                    showModal('termsModal');
+                })
+                .catch(error => {
+                    showToast(error.message, 'error');
+                    console.error('Registration error:', error);
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+        }
+        
+        // رفع الصورة إلى التخزين
+        function uploadImage(file, fileName) {
+            return new Promise((resolve, reject) => {
+                if (!file) {
+                    resolve('');
+                    return;
+                }
+                
+                const storageRef = storage.ref('profile_images/' + fileName);
+                const uploadTask = storageRef.put(file);
+                
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        console.log('Upload is ' + progress + '% done');
+                    },
+                    (error) => {
+                        console.error('Upload error:', error);
+                        reject('حدث خطأ أثناء رفع الصورة');
+                    },
+                    () => {
+                        uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                            console.log('File available at', downloadURL);
+                            resolve(downloadURL);
+                        });
+                    }
+                );
+            });
+        }
+        
+        // قبول الشروط والمتابعة للدردشة
+        function acceptTerms() {
+            if (!document.getElementById('agreeTerms').checked) {
+                showToast('يجب الموافقة على الشروط والأحكام للمتابعة', 'error');
+                return;
+            }
+            
+            hideModal('termsModal');
+            loadUserData(currentUser.id);
+            showPage('chatPage');
+            initChat();
+        }
+        
+        // تحميل بيانات المستخدم
+        function loadUserData(userId) {
+            database.ref('users/' + userId).on('value', snapshot => {
+                currentUserData = snapshot.val();
+                
+                if (currentUserData) {
+                    currentUser.username = currentUserData.username;
+                    currentUser.status = currentUserData.status || '';
+                    currentUser.profileImage = currentUserData.profileImage || '';
+                    
+                    localStorage.setItem('9o7chatUser', JSON.stringify(currentUser));
+                    
+                    updateProfileImage(currentUser.profileImage);
+                    updateSettingsUI();
+                }
+            });
+        }
+        
+        // تحديث صورة الملف الشخصي في الواجهة
+        function updateProfileImage(imageUrl) {
+            const defaultImage = 'https://i.https://f.top4top.io/p_3410530mv1.jpg';
+            const profileImage = imageUrl || defaultImage;
+            
+            document.getElementById('currentProfileImage').src = profileImage;
+            
+            // تحديث جميع صور المستخدم في الرسائل
+            document.querySelectorAll('.message-user-img[data-user-id="' + currentUser.id + '"]').forEach(img => {
+                img.src = profileImage;
+            });
+        }
+        
+        // تهيئة الدردشة
+        function initChat() {
+            database.ref('users').orderByChild('isOnline').equalTo(true).on('value', snapshot => {
+                document.getElementById('onlineCount').textContent = snapshot.numChildren() + ' مستخدم';
+            });
+            
+            messagesRef = database.ref('messages').limitToLast(100);
+            messagesRef.on('child_added', snapshot => {
+                const message = snapshot.val();
+                displayMessage(message, snapshot.key);
+            });
+            
+            messagesRef.on('child_changed', snapshot => {
+                const message = snapshot.val();
+                if (message.deleted) {
+                    const messageElement = document.querySelector(`[data-message-id="${snapshot.key}"]`);
+                    if (messageElement) {
+                        messageElement.remove();
+                    }
+                } else {
+                    displayMessage(message, snapshot.key);
+                }
+            });
+            
+            window.addEventListener('beforeunload', () => {
+                if (currentUser) {
+                    database.ref('users/' + currentUser.id).update({
+                        isOnline: false,
+                        lastSeen: firebase.database.ServerValue.TIMESTAMP
+                    });
+                }
+            });
+        }
+        
+        // إرسال رسالة
+        function sendMessage() {
+            const messageText = document.getElementById('messageInput').value.trim();
+            
+            if (!messageText && !messageImageFile) return;
+            
+            if (containsBannedWords(messageText)) {
+                showToast('تحتوي الرسالة على كلمات غير مسموح بها', 'error');
+                return;
+            }
+            
+            if (messageImageFile) showLoading();
+            
+            const uploadPromise = messageImageFile ? 
+                uploadImage(messageImageFile, 'message_' + Date.now() + '_' + messageImageFile.name) : 
+                Promise.resolve('');
+            
+            uploadPromise.then(imageUrl => {
+                const message = {
+                    userId: currentUser.id,
+                    text: messageText,
+                    imageUrl: imageUrl,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                };
+                
+                return database.ref('messages').push(message);
+            })
+            .then(() => {
+                document.getElementById('messageInput').value = '';
+                document.getElementById('messageInput').style.height = 'auto';
+                messageImageFile = null;
+                document.getElementById('imagePreviewContainer').style.display = 'none';
+            })
+            .catch(error => {
+                console.error('Error sending message:', error);
+                showToast('حدث خطأ أثناء إرسال الرسالة', 'error');
+            })
+            .finally(() => {
+                hideLoading();
+            });
+        }
+        
+        // عرض الرسائل
+        function displayMessage(message, messageId) {
+            const messagesContainer = document.getElementById('messagesContainer');
+            const isCurrentUser = message.userId === currentUser?.id;
+            
+            if (message.deleted) return;
+           
+            const existingMessage = document.querySelector(`[data-message-id="${messageId}"]`);
+            if (existingMessage) {
+                existingMessage.innerHTML = createMessageContent(message, messageId, isCurrentUser);
+                return;
+            }
+            
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${isCurrentUser ? 'sent' : 'received'}`;
+            messageElement.dataset.messageId = messageId;
+            messageElement.innerHTML = createMessageContent(message, messageId, isCurrentUser);
+            
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        // إنشاء محتوى الرسالة
+        function createMessageContent(message, messageId, isCurrentUser) {
+            const userData = usersCache[message.userId] || {};
+            const profileImage = userData.profileImage || 'https://f.top4top.io/p_3410530mv1.jpg';
+            const username = userData.username || 'مستخدم مجهول';
+            const status = userData.status || '';
+            
+            let messageContent = `
+                <div class="message-user" onclick="showUserProfile('${message.userId}')">
+                    <img src="${profileImage}" class="message-user-img" data-user-id="${message.userId}">
+                    <div class="message-user-name">${username}</div>
+                </div>
+            `;
+            
+            if (isCurrentUser) {
+                messageContent += `
+                    <div class="message-actions">
+                        <button class="delete-message-btn" onclick="deleteMessage('${messageId}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            }
+            
+            if (message.text) {
+                const codeBlocks = message.text.match(/```(\w*)\n([\s\S]*?)```/g) || [];
+                let processedText = message.text;
+                
+                codeBlocks.forEach((codeBlock) => {
+                    const match = codeBlock.match(/```(\w*)\n([\s\S]*?)```/);
+                    if (match) {
+                        const language = match[1] || 'text';
+                        const code = match[2];
+                        
+                        const codeHtml = `
+                            <div class="code-container">
+                                <div class="code-header">
+                                    <span class="code-language">${language}</span>
+                                    <button class="copy-code-btn" onclick="copyCode(this)">
+                                        <i class="fas fa-copy"></i> نسخ
+                                    </button>
+                                </div>
+                                <div class="code-content">
+                                    <pre><code>${code}</code></pre>
+                                </div>
+                            </div>
+                        `;
+                        
+                        processedText = processedText.replace(codeBlock, codeHtml);
+                    }
+                });
+                
+                messageContent += `<div class="message-text">${processedText}</div>`;
+            }
+            
+            if (message.imageUrl) {
+                messageContent += `<img src="${message.imageUrl}" class="message-image" onclick="viewImage('${message.imageUrl}')">`;
+            }
+            
+            messageContent += `
+                <div class="message-time">
+                    ${formatTime(message.timestamp)}
+                </div>
+            `;
+            
+            return messageContent;
+        }
+        
+        // حذف الرسالة
+        function deleteMessage(messageId) {
+            if (confirm('هل أنت متأكد من حذف هذه الرسالة؟')) {
+                showLoading();
+                
+                database.ref('messages/' + messageId).update({
+                    deleted: true,
+                    deletedAt: firebase.database.ServerValue.TIMESTAMP
+                })
+                .then(() => {
+                    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+                    if (messageElement) {
+                        messageElement.remove();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting message:', error);
+                    showToast('حدث خطأ أثناء حذف الرسالة', 'error');
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+            }
+        }
+        
+        // تحميل الصورة للرسالة
+        function handleImageUpload() {
+            const fileInput = document.getElementById('messageImage');
+            const file = fileInput.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('imagePreview').src = e.target.result;
+                document.getElementById('imagePreviewContainer').style.display = 'block';
+                messageImageFile = file;
+            };
+            reader.readAsDataURL(file);
+            
+            fileInput.value = '';
+        }
+        
+        // إزالة معاينة الصورة
+        function removeImagePreview() {
+            document.getElementById('imagePreviewContainer').style.display = 'none';
+            messageImageFile = null;
+        }
+        
+        // عرض ملف تعريف المستخدم
+        function showUserProfile(userId) {
+            showLoading();
+            
+            database.ref('users/' + userId).once('value')
+                .then(snapshot => {
+                    if (!snapshot.exists()) {
+                        throw new Error('المستخدم غير موجود');
+                    }
+                    
+                    const user = snapshot.val();
+                    
+                    const userImage = document.getElementById('userModalImage');
+                    const userName = document.getElementById('userModalName');
+                    const userStatus = document.getElementById('userModalStatus');
+                    const lastSeen = document.getElementById('userModalLastSeen');
+                    
+                    userImage.src = user.profileImage || 'https://f.top4top.io/p_3410530mv1.jpg';
+                    userName.textContent = user.username || 'مستخدم مجهول';
+                    userStatus.textContent = user.status || 'لا توجد حالة';
+                    
+                    if (user.isOnline) {
+                        lastSeen.textContent = '🟢 متصل الآن';
+                    } else if (user.lastSeen) {
+                        lastSeen.textContent = `⚫ آخر ظهور: ${formatTime(user.lastSeen)}`;
+                    } else {
+                        lastSeen.textContent = '⚫ غير متصل';
+                    }
+                    
+                    showModal('userModal');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('فشل تحميل البيانات', 'error');
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+        }
+        
+        // تحديث الملف الشخصي
+        function updateProfile() {
+            const newUsername = document.getElementById('profileUsername').value.trim();
+            const newStatus = document.getElementById('profileStatus').value.trim();
+            
+            if (!newUsername) {
+                showToast('اسم المستخدم مطلوب', 'error');
+                return;
+            }
+            
+            showLoading();
+            
+            database.ref('users/' + currentUser.id).update({
+                username: newUsername,
+                status: newStatus
+            })
+            .then(() => {
+                currentUser.username = newUsername;
+                currentUser.status = newStatus;
+                
+                localStorage.setItem('9o7chatUser', JSON.stringify(currentUser));
+                
+                updateSettingsUI();
+                
+                showToast('تم تحديث الملف الشخصي بنجاح');
+                
+                setTimeout(() => {
+                    hideModal('profileModal');
+                }, 1000);
+            })
+            .catch(error => {
+                console.error('Error updating profile:', error);
+                showToast('حدث خطأ أثناء تحديث الملف الشخصي', 'error');
+            })
+            .finally(() => {
+                hideLoading();
+            });
+        }
+        
+        // تغيير كلمة السر
+        function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value.trim();
+            const newPassword = document.getElementById('newPassword').value.trim();
+            const confirmNewPassword = document.getElementById('confirmNewPassword').value.trim();
+            
+            if (!currentPassword || !newPassword || !confirmNewPassword) {
+                showToast('الرجاء ملء جميع الحقول', 'error');
+                return;
+            }
+            
+            if (currentUserData.password !== currentPassword) {
+                showToast('كلمة السر الحالية غير صحيحة', 'error');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                showToast('كلمة السر يجب أن تكون 6 أحرف على الأقل', 'error');
+                return;
+            }
+            
+            if (!/[a-zA-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+                showToast('كلمة السر يجب أن تحتوي على أحرف وأرقام إنجليزية', 'error');
+                return;
+            }
+            
+            if (newPassword !== confirmNewPassword) {
+                showToast('كلمة السر الجديدة غير متطابقة', 'error');
+                return;
+            }
+            
+            showLoading();
+            
+            database.ref('users/' + currentUser.id).update({
+                password: newPassword
+            })
+            .then(() => {
+                showToast('تم تغيير كلمة السر بنجاح');
+                hideModal('passwordModal');
+                
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmNewPassword').value = '';
+            })
+            .catch(error => {
+                console.error('Error changing password:', error);
+                showToast('حدث خطأ أثناء تغيير كلمة السر', 'error');
+            })
+            .finally(() => {
+                hideLoading();
+            });
+        }
+        
+        // تسجيل الخروج
+        function logout() {
+            if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
+                if (currentUser) {
+                    database.ref('users/' + currentUser.id).update({
+                        isOnline: false,
+                        lastSeen: firebase.database.ServerValue.TIMESTAMP
+                    });
+                }
+                
+                localStorage.removeItem('9o7chatUser');
+                currentUser = null;
+                currentUserData = null;
+                
+                if (messagesRef) {
+                    messagesRef.off();
+                }
+                
+                showPage('loginPage');
+                hideModal('settingsModal');
+                hideModal('profileModal');
+                hideModal('passwordModal');
+            }
+        }
+        
+        // وظائف مساعدة
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = input.nextElementSibling;
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+        
+        function previewImage(input, previewId, placeholderId) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById(previewId).src = e.target.result;
+                document.getElementById(previewId).style.display = 'block';
+                document.getElementById(placeholderId).style.display = 'none';
+                selectedImageFile = file;
+                
+                const uploadSuccess = document.getElementById('uploadSuccess');
+                uploadSuccess.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function updateSettingsUI() {
+            document.getElementById('settingsProfileImage').src = currentUser.profileImage || 'https://f.top4top.io/p_3410530mv1.jpg';
+            document.getElementById('settingsUsername').textContent = currentUser.username;
+            document.getElementById('settingsStatus').textContent = currentUser.status || 'لا توجد حالة';
+            
+            document.getElementById('profileUsername').value = currentUser.username;
+            document.getElementById('profileStatus').value = currentUser.status || '';
+        }
+        
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            
+            const date = new Date(timestamp);
+            let hours = date.getHours();
+            let minutes = date.getMinutes().toString().padStart(2, '0');
+            
+            let period = hours >= 12 ? 'مساءً' : 'صباحًا';
+            let hour12 = hours % 12 || 12;
+            
+            return `${hour12}:${minutes} ${period}`;
+        }
+        
+        function containsBannedWords(text) {
+            if (!text) return false;
+            const lowerText = text.toLowerCase();
+            return bannedWords.some(word => lowerText.includes(word.toLowerCase()));
+        }
+        
+        function copyCode(button) {
+            const codeBlock = button.parentElement;
+            const code = codeBlock.querySelector('code').innerText;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                button.innerHTML = '<i class="fas fa-check"></i> تم النسخ';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="fas fa-copy"></i> نسخ';
+                }, 2000);
+            });
+        }
+        
+        function viewImage(imageUrl) {
+            window.open(imageUrl, '_blank');
+        }
+        
+        // إظهار مؤشر التحميل
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+        
+        // إخفاء مؤشر التحميل
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+        
+        // إدارة الصفحات والنوافذ
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active-page');
+            });
+            document.getElementById(pageId).classList.add('active-page');
+        }
+        
+        function showModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+            
+            if (modalId === 'settingsModal') {
+                updateSettingsUI();
+            }
+        }
+        
+        function hideModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // دالة معالجة رفع صورة البروفايل
+        async function handleProfileImageUpload(file) {
+            if (!file) return;
+
+            const loadingElement = document.getElementById('profileLoading');
+            const imageElement = document.getElementById('currentProfileImage');
+            const userId = currentUser.id;
+
+            try {
+                loadingElement.style.display = 'block';
+
+                if (currentUser.profileImage && currentUser.profileImage !== 'https://f.top4top.io/p_3410530mv1.jpg') {
+                    const oldImageRef = storage.refFromURL(currentUser.profileImage);
+                    try {
+                        await oldImageRef.delete();
+                    } catch (error) {
+                        console.log('لم يتم العثور على الصورة القديمة أو حدث خطأ في الحذف:', error);
+                    }
+                }
+
+                const newImageRef = storage.ref(`profile_images/${userId}/${Date.now()}_${file.name}`);
+                const snapshot = await newImageRef.put(file);
+                const downloadURL = await snapshot.ref.getDownloadURL();
+
+                await database.ref(`users/${userId}`).update({
+                    profileImage: downloadURL
+                });
+
+                currentUser.profileImage = downloadURL;
+                localStorage.setItem('9o7chatUser', JSON.stringify(currentUser));
+
+                updateProfileImage(downloadURL);
+                showToast('تم تحديث الصورة بنجاح!');
+
+            } catch (error) {
+                console.error('Error updating profile image:', error);
+                showToast('حدث خطأ أثناء التحديث: ' + error.message, 'error');
+            } finally {
+                loadingElement.style.display = 'none';
+            }
+        }
+
+        // عرض رسالة تأكيد
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type === 'error' ? 'error' : ''}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
