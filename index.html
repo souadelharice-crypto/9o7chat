@@ -535,14 +535,18 @@ async function doReg(){
   if(DEMO){demoLogin(nm);return;}
   const b=document.getElementById('brg');b.disabled=true;b.textContent='جارٍ...';
   try{
-    const sn=await DB.ref('handles/'+hd).once('value');
-    if(sn.exists()){shErr('@'+hd+' محجوز');b.disabled=false;b.textContent='✦ إنشاء';return;}
     const cr=await AU.createUserWithEmailAndPassword(em,ps);
     await cr.user.updateProfile({displayName:nm});
     const color=gc(cr.user.uid);
+    const sn=await DB.ref('handles/'+hd).once('value');
+    if(sn.exists()){
+      await cr.user.delete();
+      shErr('@'+hd+' محجوز، جرّب اسماً آخر');
+      b.disabled=false;b.textContent='✦ إنشاء الحساب';return;
+    }
     await DB.ref('users/'+cr.user.uid).set({uid:cr.user.uid,name:nm,handle:hd,email:em,color,createdAt:firebase.database.ServerValue.TIMESTAMP});
     await DB.ref('handles/'+hd).set(cr.user.uid);
-  }catch(e){b.disabled=false;b.textContent='✦ إنشاء';const M={'auth/email-already-in-use':'البريد مستخدم','auth/weak-password':'كلمة المرور ضعيفة','auth/network-request-failed':'خطأ في الاتصال'};shErr(M[e.code]||e.message);}
+  }catch(e){b.disabled=false;b.textContent='✦ إنشاء الحساب';const M={'auth/email-already-in-use':'البريد مستخدم من قبل','auth/weak-password':'كلمة المرور ضعيفة','auth/network-request-failed':'خطأ في الاتصال','auth/invalid-email':'بريد غير صحيح'};shErr(M[e.code]||e.message);}
 }
 
 async function doGuest(){
