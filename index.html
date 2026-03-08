@@ -778,8 +778,9 @@ async function doLogin(){
   const b=document.getElementById('btn-lg');b.disabled=true;b.textContent='...';
   try{await AU.signInWithEmailAndPassword(em,pw);}
   catch(e){b.disabled=false;b.textContent='دخول ←';
-    const M={'auth/user-not-found':'لا يوجد حساب','auth/wrong-password':'كلمة مرور خاطئة','auth/too-many-requests':'محاولات كثيرة، انتظر'};
-    shErr(M[e.code]||e.message);}
+    console.error('[login]',e.code,e.message);
+    const M={'auth/user-not-found':'لا يوجد حساب','auth/wrong-password':'كلمة مرور خاطئة','auth/too-many-requests':'محاولات كثيرة، انتظر','auth/unauthorized-domain':'الدومين غير مرخص في Firebase — أضف harice-crypto.github.io في Authorized Domains','auth/network-request-failed':'مشكلة في الاتصال بالإنترنت'};
+    shErr(M[e.code]||e.code+': '+e.message);}
 }
 
 async function doRegister(){
@@ -848,8 +849,13 @@ AU.onAuthStateChanged(async fbU=>{
     document.getElementById('my-topbar-handle').textContent='@'+(ME.handle||'');
     initApp();
   }catch(e){
-    console.error('[9o7] auth error:',e);
+    console.error('[9o7] auth error:',e.code, e.message);
+    // Show error to user
+    document.getElementById('loader').style.display='none';
     document.getElementById('auth').style.display='flex';
+    // Show error message in auth page
+    const errEl=document.getElementById('af-err');
+    if(errEl){errEl.textContent='خطأ في الاتصال: '+e.message;errEl.classList.add('show');}
   }
 });
 
