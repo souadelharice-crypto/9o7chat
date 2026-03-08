@@ -341,6 +341,22 @@ html,body{height:100%;font-family:'Tajawal',sans-serif;background:#000;color:#ff
 .empty-state p{font-size:14px;line-height:1.6}
 .divider{height:1px;background:var(--border2);margin:0}
 .sec-title{font-size:13px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;padding:14px 16px 6px}
+
+/* ── VOICE RECORDING ── */
+.rec-bar{display:none;align-items:center;gap:9px;padding:8px 12px;background:rgba(244,67,54,.08);border:1px solid rgba(244,67,54,.2);border-radius:12px;margin-bottom:8px;animation:recPulse 1.5s ease infinite}
+.rec-bar.show{display:flex}
+@keyframes recPulse{0%,100%{opacity:1}50%{opacity:.6}}
+.rec-dot{width:9px;height:9px;border-radius:50%;background:var(--red);flex-shrink:0;box-shadow:0 0 6px var(--red)}
+.rec-time{font-size:13px;color:var(--red);flex:1;font-weight:600}
+.rec-cancel{background:none;border:none;color:var(--t3);font-size:13px;cursor:pointer}
+.rec-cancel:active{color:var(--red)}
+.voice-bbl{display:flex;align-items:center;gap:9px;min-width:160px}
+.voice-play{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+.voice-play:active{background:rgba(255,255,255,.25)}
+.voice-waves{display:flex;align-items:center;gap:2px;flex:1;height:24px}
+.vw-bar{flex:1;min-width:2px;border-radius:1px;background:rgba(255,255,255,.5);transition:height .1s}
+.voice-dur{font-size:11px;opacity:.7;flex-shrink:0;font-weight:600}
+
 </style>
 </head>
 <body>
@@ -487,9 +503,17 @@ html,body{height:100%;font-family:'Tajawal',sans-serif;background:#000;color:#ff
     <button class="ico-btn" onclick="openUserProfile(CHAT_UID)">👤</button>
   </div>
   <div class="chat-msgs" id="chat-msgs"></div>
+
+  <div class="rec-bar" id="rec-bar">
+    <div class="rec-dot"></div>
+    <span class="rec-time" id="rec-time">0:00</span>
+    <span style="font-size:12px;color:var(--t3)">جارٍ التسجيل...</span>
+    <button class="rec-cancel" onclick="cancelRec()">إلغاء</button>
+  </div>
   <div class="chat-input-bar">
     <div class="chat-input-inner">
       <button class="chat-img-btn" onclick="document.getElementById('chat-img-inp').click()">🖼</button>
+      <button class="chat-img-btn" id="mic-btn" onclick="togVoice()" style="font-size:20px">🎤</button>
       <textarea class="chat-ta" id="chat-ta" placeholder="رسالة..." rows="1" onkeydown="onChatKey(event)" oninput="autoH(this)"></textarea>
     </div>
     <button class="chat-send" onclick="sendMsg()" id="chat-send-btn">▶</button>
@@ -577,6 +601,26 @@ html,body{height:100%;font-family:'Tajawal',sans-serif;background:#000;color:#ff
 <div id="lbx" onclick="this.classList.remove('open')"><img id="lbimg" src="" alt=""></div>
 
 <script>
+
+// ═══════════════════════════════════════════════════
+//  IMAGE COMPRESSION
+// ═══════════════════════════════════════════════════
+async function compressImg(dataURL, maxW=800, quality=0.72) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const scale = Math.min(1, maxW / img.width);
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(dataURL);
+    img.src = dataURL;
+  });
+}
+
 // ═══════════════════════════════════════════════════
 //  FIREBASE CONFIG
 // ═══════════════════════════════════════════════════
@@ -830,7 +874,7 @@ async function loadFeed(){
   const fols=[ME.uid];
   if(folSn.exists())folSn.forEach(c=>fols.push(c.key));
   // Load posts from following
-  const postsSn=await DB.ref('posts').orderByChild('time').limitToLast(50).once('value');
+  const postsSn=await DB.ref('posts').orderByChild('time').limitToLast(20).once('value');
   const posts=[];
   postsSn.forEach(c=>{const p=c.val();if(fols.includes(p.uid)||p.uid===ME.uid)posts.push({id:c.key,...p});});
   posts.sort((a,b)=>b.time-a.time);
@@ -989,8 +1033,8 @@ function onPostImg(inp){
   const f=inp.files[0];if(!f)return;
   if(f.size>4*1024*1024)return showToast('الصورة أكبر من 4MB');
   const r=new FileReader();
-  r.onload=e=>{
-    POST_IMG_DATA=e.target.result;
+  r.onload=async e=>{
+    POST_IMG_DATA=await compressImg(e.target.result,1080,0.75);
     const pick=document.getElementById('img-pick');
     pick.innerHTML=`<img src="${e.target.result}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:var(--r)"><span class="pick-label" style="position:relative;z-index:1;background:rgba(0,0,0,.5);padding:6px 12px;border-radius:8px;font-size:13px">✕ تغيير</span>`;
   };r.readAsDataURL(f);inp.value='';
@@ -1162,7 +1206,7 @@ async function uploadAvatar(inp){
   if(f.size>2*1024*1024)return showToast('الصورة أكبر من 2MB');
   const r=new FileReader();
   r.onload=async e=>{
-    ME.photoURL=e.target.result;
+    ME.photoURL=await compressImg(e.target.result,400,0.8);
     await DB.ref('users/'+ME.uid).update({photoURL:ME.photoURL});
     renderMyProfile();showToast('✅ تم تحديث الصورة');
   };r.readAsDataURL(f);inp.value='';
@@ -1263,34 +1307,95 @@ function closeChat(){
   rmL('chatmsgs');CHAT_UID=null;CHAT_ID=null;
 }
 
-function listenChatMsgs(cid){
-  rmL('chatmsgs');
-  const ref=DB.ref('messages/'+cid).orderByChild('time').limitToLast(100);
-  LISTENERS['chatmsgs']=ref;let first=true;
-  ref.on('value',async sn=>{
-    const msgs=[];sn.forEach(c=>msgs.push({id:c.key,...c.val()}));
-    const mw=document.getElementById('chat-msgs');mw.innerHTML='';
-    if(!msgs.length)return;
-    mw.appendChild(Object.assign(document.createElement('div'),{className:'dsep',textContent:'اليوم'}));
-    let prev=null;
-    for(const m of msgs){
-      const isMe=m.from===ME.uid;
-      const cont=m.from===prev;prev=m.from;
-      const u=isMe?ME:(await DB.ref('users/'+m.from).once('value')).val()||{};
-      const avBg=u.photoURL?`background-image:url(${san(u.photoURL)});background-color:${san(u.color||gc(m.from))};background-size:cover;background-position:center`:`background:${san(u.color||gc(m.from))}`;
-      const row=document.createElement('div');row.className=`msg-row ${isMe?'out':'inc'}${cont?' cont':''}`;
-      const av=!isMe?`<div class="msg-av" style="${avBg};width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;align-self:flex-end;margin-bottom:2px">${u.photoURL||cont?'':san((u.name||'?')[0])}</div>`:'';
-      let bblContent='';
-      if(m.type==='image'&&m.img)bblContent=`<img class="msg-img" src="${san(m.img)}" onclick="document.getElementById('lbimg').src=this.src;document.getElementById('lbx').classList.add('open')">`;
-      else bblContent=san(m.text||'').replace(/\n/g,'<br>');
-      row.innerHTML=`${av}<div><div class="msg-bbl">${bblContent}<div class="msg-meta">${san(fmtT(m.time))}${isMe?`<span style="font-size:11px">${m.read?'✓✓':'✓'}</span>`:''}</div></div></div>`;
-      mw.appendChild(row);
+// Cache user data to avoid repeated fetches
+const userCache={};
+async function getUser(uid){
+  if(userCache[uid])return userCache[uid];
+  const sn=await DB.ref('users/'+uid).once('value');
+  userCache[uid]=sn.val()||{};
+  return userCache[uid];
+}
+
+function mkMsgRow(m,lastFrom){
+  const isMe=m.from===ME.uid;
+  const cont=m.from===lastFrom;
+  const u=isMe?ME:(userCache[m.from]||{});
+  const avBg=u.photoURL
+    ?`background-image:url(${san(u.photoURL)});background-color:${san(u.color||gc(m.from))};background-size:cover;background-position:center`
+    :`background:${san(u.color||gc(m.from))}`;
+  const row=document.createElement('div');
+  row.className=`msg-row ${isMe?'out':'inc'}${cont?' cont':''}`;
+  row.dataset.id=m.id;
+  const av=!isMe
+    ?`<div class="msg-av" style="${avBg};width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;align-self:flex-end;margin-bottom:2px">${u.photoURL||cont?'':san((u.name||'?')[0])}</div>`
+    :'';
+  let bblContent='';
+  const vid='v_'+san(m.id);
+  if(m.type==='voice'&&m.audio){
+    const bars=Array.from({length:18},()=>`<div class="vw-bar" style="height:${20+Math.floor(Math.random()*60)}%"></div>`).join('');
+    bblContent=`<div class="voice-bbl"><button class="voice-play" onclick="playVoice(this,'${san(m.audio)}','${vid}')">▶</button><div class="voice-waves" id="vw-${vid}">${bars}</div><span class="voice-dur">${san(m.dur||'0:00')}</span></div>`;
+  }else if(m.type==='image'&&m.img){
+    bblContent=`<img class="msg-img" src="${san(m.img)}" loading="lazy" onclick="document.getElementById('lbimg').src=this.src;document.getElementById('lbx').classList.add('open')">`;
+  }else{
+    bblContent=san(m.text||'').replace(/\n/g,'<br>');
+  }
+  row.innerHTML=`${av}<div><div class="msg-bbl">${bblContent}<div class="msg-meta">${san(fmtT(m.time))}${isMe?`<span style="font-size:11px">${m.read?'✓✓':'✓'}</span>`:''}</div></div></div>`;
+  return {row,isMe};
+}
+
+async function listenChatMsgs(cid){
+  rmL('chatmsgs');rmL('chatchanged');
+  const mw=document.getElementById('chat-msgs');
+  mw.innerHTML='<div class="dsep">اليوم</div>';
+  const renderedIds=new Set();
+  let lastFrom=null;
+
+  // ── Step 1: load existing messages first ──
+  const snap=await DB.ref('messages/'+cid).orderByChild('time').limitToLast(80).once('value');
+  const existing=[];
+  snap.forEach(c=>existing.push({id:c.key,...c.val()}));
+  // Pre-cache all user data
+  const uids=[...new Set(existing.map(m=>m.from).filter(u=>u!==ME.uid))];
+  await Promise.all(uids.map(uid=>getUser(uid)));
+  // Render existing
+  for(const m of existing){
+    const {row,isMe}=mkMsgRow(m,lastFrom);
+    lastFrom=m.from;
+    mw.appendChild(row);
+    renderedIds.add(m.id);
+    if(!isMe&&!m.read){
+      DB.ref('messages/'+cid+'/'+m.id+'/read').set(true).catch(()=>{});
     }
-    if(first){mw.scrollTop=mw.scrollHeight;first=false;}else mw.scrollTop=mw.scrollHeight;
-    // Mark read
-    DB.ref('chats/'+cid+'/unread/'+ME.uid).set(0);
-    // Mark all their msgs as read
-    msgs.filter(m=>m.from!==ME.uid&&!m.read).forEach(m=>DB.ref('messages/'+cid+'/'+m.id+'/read').set(true).catch(()=>{}));
+  }
+  mw.scrollTop=mw.scrollHeight;
+  DB.ref('chats/'+cid+'/unread/'+ME.uid).set(0).catch(()=>{});
+
+  // ── Step 2: listen for NEW messages only ──
+  const since=existing.length?existing[existing.length-1].time:Date.now();
+  const ref=DB.ref('messages/'+cid).orderByChild('time').startAt(since+1);
+  LISTENERS['chatmsgs']=ref;
+  ref.on('child_added',async sn=>{
+    const m={id:sn.key,...sn.val()};
+    if(renderedIds.has(m.id))return; // skip already rendered
+    renderedIds.add(m.id);
+    if(m.from!==ME.uid)await getUser(m.from);
+    const{row,isMe}=mkMsgRow(m,lastFrom);
+    lastFrom=m.from;
+    mw.appendChild(row);
+    mw.scrollTop=mw.scrollHeight;
+    if(!isMe&&!m.read){
+      DB.ref('messages/'+cid+'/'+m.id+'/read').set(true).catch(()=>{});
+      DB.ref('chats/'+cid+'/unread/'+ME.uid).set(0).catch(()=>{});
+    }
+  });
+
+  // ── Step 3: read receipts ──
+  const ref2=DB.ref('messages/'+cid).orderByChild('from').equalTo(ME.uid);
+  LISTENERS['chatchanged']=ref2;
+  ref2.on('child_changed',sn=>{
+    const m=sn.val();
+    const row=document.querySelector(`.msg-row[data-id="${sn.key}"]`);
+    if(row){const meta=row.querySelector('.msg-meta span');if(meta)meta.textContent=m.read?'✓✓':'✓';}
   });
 }
 
@@ -1317,7 +1422,7 @@ function onChatImg(inp){
   const f=inp.files[0];if(!f)return;
   if(f.size>3*1024*1024)return showToast('الصورة أكبر من 3MB');
   const r=new FileReader();
-  r.onload=async e=>{await sendMsgData({type:'image',img:e.target.result,text:'📷 صورة'});};
+  r.onload=async e=>{const ci=await compressImg(e.target.result,800,0.72);await sendMsgData({type:'image',img:ci,text:'📷 صورة'});};
   r.readAsDataURL(f);inp.value='';
 }
 
@@ -1420,6 +1525,100 @@ document.addEventListener('keydown',e=>{
     closeChat();closeStory();
   }
 });
+
+// ═══════════════════════════════════════════════════
+//  VOICE RECORDING
+// ═══════════════════════════════════════════════════
+let mediaRec=null, audioChunks=[], recTmr=null, recSecs=0, recStream=null;
+
+async function startVoice(){
+  try{
+    recStream=await navigator.mediaDevices.getUserMedia({audio:true});
+    mediaRec=new MediaRecorder(recStream,{mimeType:MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':'audio/ogg'});
+    audioChunks=[];
+    mediaRec.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data);};
+    mediaRec.onstop=async()=>{
+      const blob=new Blob(audioChunks,{type:mediaRec.mimeType});
+      if(blob.size>0)await sendVoiceMsg(blob);
+      recStream?.getTracks().forEach(t=>t.stop());
+    };
+    mediaRec.start(250);
+    recSecs=0;
+    document.getElementById('rec-bar').classList.add('show');
+    document.getElementById('mic-btn').style.color='var(--red)';
+    document.getElementById('mic-btn').textContent='⏹';
+    recTmr=setInterval(()=>{
+      recSecs++;
+      const m=Math.floor(recSecs/60),s=String(recSecs%60).padStart(2,'0');
+      document.getElementById('rec-time').textContent=m+':'+s;
+      if(recSecs>=120)stopVoice();
+    },1000);
+  }catch(e){
+    showToast('❌ لا يمكن الوصول للميكروفون');
+    console.error(e);
+  }
+}
+
+function stopVoice(){
+  clearInterval(recTmr);
+  document.getElementById('rec-bar').classList.remove('show');
+  document.getElementById('mic-btn').style.color='';
+  document.getElementById('mic-btn').textContent='🎤';
+  if(mediaRec&&mediaRec.state!=='inactive')mediaRec.stop();
+}
+
+function cancelRec(){
+  clearInterval(recTmr);
+  recStream?.getTracks().forEach(t=>t.stop());
+  mediaRec=null;audioChunks=[];recSecs=0;
+  document.getElementById('rec-bar').classList.remove('show');
+  document.getElementById('mic-btn').style.color='';
+  document.getElementById('mic-btn').textContent='🎤';
+}
+
+function togVoice(){
+  if(mediaRec&&mediaRec.state==='recording')stopVoice();
+  else startVoice();
+}
+
+async function sendVoiceMsg(blob){
+  const dur=fmtDur(recSecs);
+  // Convert to base64
+  const r=new FileReader();
+  r.onload=async e=>{
+    await sendMsgData({type:'voice',audio:e.target.result,dur,text:'🎤 رسالة صوتية'});
+  };
+  r.readAsDataURL(blob);
+}
+
+function fmtDur(secs){const m=Math.floor(secs/60),s=String(secs%60).padStart(2,'0');return m+':'+s;}
+
+// Voice playback
+const voicePlayers={};
+function playVoice(btn,audioSrc,id){
+  if(voicePlayers[id]&&!voicePlayers[id].paused){
+    voicePlayers[id].pause();btn.textContent='▶';return;
+  }
+  if(!voicePlayers[id]){
+    voicePlayers[id]=new Audio(audioSrc);
+    voicePlayers[id].onended=()=>{btn.textContent='▶';animVoice(id,false);};
+  }
+  voicePlayers[id].play();btn.textContent='⏸';animVoice(id,true);
+}
+
+function animVoice(id,playing){
+  const bars=document.querySelectorAll('#vw-'+id+' .vw-bar');
+  if(!playing){bars.forEach(b=>b.style.height='40%');return;}
+  let anim;
+  function frame(){
+    bars.forEach(b=>b.style.height=Math.random()*70+20+'%');
+    anim=requestAnimationFrame(frame);
+    if(voicePlayers[id]?.paused){cancelAnimationFrame(anim);bars.forEach(b=>b.style.height='40%');}
+  }
+  requestAnimationFrame(frame);
+}
+
+
 </script>
 </body>
 </html>
