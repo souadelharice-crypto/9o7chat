@@ -1,51 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>9O7CHAT - Mapped & Encrypted</title>
+    <title>9O7CHAT - النسخة النهائية</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-js.download"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary-neon: #00ff88; --bg-primary: #0a0e27; --text-primary: #e0e6ff;
-        }
-        body { font-family: 'JetBrains Mono', monospace; background: var(--bg-primary); color: var(--text-primary); height: 100vh; overflow: hidden; }
-        .sidebar { width: 280px; border-right: 1px solid rgba(0, 255, 136, 0.1); background: rgba(26, 31, 58, 0.8); backdrop-filter: blur(20px); }
-        .room-item { padding: 12px; margin: 8px; background: rgba(0, 255, 136, 0.05); border-radius: 8px; cursor: pointer; transition: 0.3s; border: 1px solid transparent; }
-        .room-item:hover, .room-item.active { background: rgba(0, 255, 136, 0.15); border-color: var(--primary-neon); color: var(--primary-neon); }
-        .messages-container { flex: 1; overflow-y: auto; padding: 20px; }
-        .message-text { background: rgba(0, 255, 136, 0.1); padding: 10px; border-radius: 8px; margin-top: 4px; }
-        .own .message-text { background: rgba(0, 212, 255, 0.1); }
+        :root { --primary: #00ff88; --bg: #0a0e27; }
+        body { font-family: 'JetBrains Mono', monospace; background: var(--bg); color: #e0e6ff; height: 100vh; overflow: hidden; }
+        .sidebar { width: 280px; border-left: 1px solid rgba(0, 255, 136, 0.1); background: rgba(26, 31, 58, 0.8); backdrop-filter: blur(20px); }
+        .room-item { padding: 12px; margin: 8px; background: rgba(0, 255, 136, 0.05); border-radius: 8px; cursor: pointer; transition: 0.3s; border: 1px solid transparent; text-align: right; }
+        .room-item.active { background: rgba(0, 255, 136, 0.2); border-color: var(--primary); color: var(--primary); }
+        .messages-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+        .msg { max-width: 70%; padding: 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.05); }
+        .msg.own { align-self: flex-start; background: rgba(0, 255, 136, 0.1); border-right: 3px solid var(--primary); }
     </style>
 </head>
 <body class="flex">
     <div class="sidebar flex flex-col">
         <div class="p-6 border-b border-green-900/30">
-            <h1 class="text-2xl font-bold tracking-widest text-green-400">9O7CHAT</h1>
-            <p id="onlineStatus" class="text-xs text-green-600 mt-2">Connecting...</p>
+            <h1 class="text-2xl font-bold tracking-tighter text-green-400">9O7CHAT 💀</h1>
+            <div id="status" class="text-xs text-gray-500 mt-2">جاري الاتصال...</div>
         </div>
         <div class="flex-1 p-4 overflow-y-auto">
-            <h2 class="text-xs uppercase tracking-widest text-gray-500 mb-4">Channels</h2>
+            <h2 class="text-xs uppercase text-gray-500 mb-4 tracking-widest">القنوات المتاحة</h2>
             <div id="roomsList"></div>
         </div>
-        <button id="authBtn" class="m-4 p-3 bg-green-500 text-black font-bold rounded hover:bg-green-400 transition">Sign In</button>
+        <button id="authBtn" class="m-4 p-3 bg-green-500 text-black font-bold rounded hover:bg-green-400 transition">دخول السيرفر</button>
     </div>
 
-    <div class="flex-1 flex flex-col bg-black/20 backdrop-blur-md">
-        <div class="p-4 border-b border-green-900/30 flex justify-between">
-            <h3 id="roomTitle" class="font-bold text-green-400">Select a Room</h3>
-            <span class="text-xs text-gray-500">Online: <span id="userCount" class="text-green-500">0</span></span>
+    <div class="flex-1 flex flex-col">
+        <div class="p-4 border-b border-green-900/30 flex justify-between items-center bg-black/20">
+            <h3 id="roomTitle" class="font-bold text-green-400">اختر غرفة للبدء</h3>
+            <span class="text-xs text-gray-500">متصل الآن: <span id="userCount" class="text-green-500">0</span></span>
         </div>
-        <div id="messagesContainer" class="messages-container flex flex-col gap-4"></div>
-        <div class="p-6 border-t border-green-900/30 flex gap-4">
-            <input id="messageInput" type="text" placeholder="Type secret message..." class="flex-1 bg-green-900/10 border border-green-900/50 rounded p-3 outline-none focus:border-green-400" disabled>
-            <button id="sendBtn" class="px-6 py-2 bg-green-500 text-black font-bold rounded disabled:opacity-50" disabled>SEND</button>
+        <div id="messagesContainer" class="messages-container"></div>
+        <div class="p-4 border-t border-green-900/30 bg-black/40 flex gap-3">
+            <input id="msgInput" type="text" placeholder="اكتب رسالة مشفرة..." class="flex-1 bg-white/5 border border-white/10 rounded p-3 outline-none focus:border-green-400" disabled>
+            <button id="sendBtn" class="px-6 py-2 bg-green-500 text-black font-bold rounded disabled:opacity-50" disabled>إرسال</button>
         </div>
     </div>
 
@@ -59,33 +56,29 @@
             appId: "1:654634327834:web:5e3c9700be11fbf6ed96a3"
         };
 
-        let db, auth, currentUser, currentRoom, msgUnsub;
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        let currentUser, currentRoom, msgUnsub;
 
         async function init() {
-            const app = firebase.initializeApp(firebaseConfig);
-            db = firebase.firestore();
-            auth = firebase.auth();
-
             auth.onAuthStateChanged(user => {
                 currentUser = user;
-                document.getElementById('authBtn').textContent = user ? 'Sign Out' : 'Sign In';
-                if(user) updatePresence(true);
+                document.getElementById('authBtn').textContent = user ? 'خروج' : 'دخول السيرفر';
+                document.getElementById('status').textContent = user ? 'متصل بنجاح ✅' : 'يرجى تسجيل الدخول';
+                if(user) ensureRooms();
             });
-
-            await ensureRooms();
             listenRooms();
         }
 
         async function ensureRooms() {
-            const defaults = [
+            const rooms = [
                 { id: 'general', name: 'الدردشة العامة 💬' },
                 { id: 'hacking', name: 'Hacking & Security 🛡️' },
-                { id: 'dev', name: 'Programming 💻' }
+                { id: 'crypto', name: 'Crypto News ₿' }
             ];
-            for (const r of defaults) {
-                const ref = db.collection('rooms').doc(r.id);
-                const snap = await ref.get();
-                if (!snap.exists) await ref.set({ name: r.name, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            for (const r of rooms) {
+                await db.collection('rooms').doc(r.id).set({ name: r.name }, { merge: true });
             }
         }
 
@@ -106,51 +99,46 @@
         function selectRoom(id, name) {
             currentRoom = id;
             document.getElementById('roomTitle').textContent = name;
-            document.getElementById('messageInput').disabled = !currentUser;
+            document.getElementById('msgInput').disabled = !currentUser;
             document.getElementById('sendBtn').disabled = !currentUser;
             loadMessages();
         }
 
         function loadMessages() {
             if (msgUnsub) msgUnsub();
-            const container = document.getElementById('messagesContainer');
             msgUnsub = db.collection('rooms').doc(currentRoom).collection('messages')
-                .orderBy('timestamp', 'asc').limit(50).onSnapshot(snap => {
-                    container.innerHTML = '';
+                .orderBy('timestamp', 'asc').onSnapshot(snap => {
+                    const cont = document.getElementById('messagesContainer');
+                    cont.innerHTML = '';
                     snap.forEach(doc => {
                         const m = doc.data();
                         const isOwn = m.userId === currentUser?.uid;
-                        container.innerHTML += `
-                            <div class="flex ${isOwn ? 'justify-end' : ''}">
-                                <div class="max-w-[70%] ${isOwn ? 'own' : ''}">
-                                    <span class="text-[10px] text-gray-500">${m.userName}</span>
-                                    <div class="message-text">${m.text}</div>
-                                </div>
-                            </div>`;
+                        cont.innerHTML += `<div class="msg ${isOwn ? 'own' : ''}">
+                            <div class="text-[10px] text-green-500 mb-1">${m.userName}</div>
+                            <div>${m.text}</div>
+                        </div>`;
                     });
-                    container.scrollTop = container.scrollHeight;
+                    cont.scrollTop = cont.scrollHeight;
                 });
         }
 
-        async function sendMessage() {
-            const input = document.getElementById('messageInput');
-            if (!input.value.trim() || !currentRoom) return;
+        async function send() {
+            const input = document.getElementById('msgInput');
+            if (!input.value.trim()) return;
             await db.collection('rooms').doc(currentRoom).collection('messages').add({
                 text: input.value,
                 userId: currentUser.uid,
-                userName: currentUser.displayName || `Anon_${currentUser.uid.slice(0,4)}`,
+                userName: `Anon_${currentUser.uid.slice(0,4)}`,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                room: currentRoom,
-                avatar: `https://api.dicebear.com/7.x/cyberpunk/svg?seed=${currentUser.uid}`
+                room: currentRoom
             });
             input.value = '';
         }
 
         document.getElementById('authBtn').onclick = () => currentUser ? auth.signOut() : auth.signInAnonymously();
-        document.getElementById('sendBtn').onclick = sendMessage;
-        document.getElementById('messageInput').onkeypress = e => e.key === 'Enter' && sendMessage();
-
-        window.onload = init;
+        document.getElementById('sendBtn').onclick = send;
+        document.getElementById('msgInput').onkeypress = e => e.key === 'Enter' && send();
+        init();
     </script>
 </body>
 </html>
