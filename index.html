@@ -3,26 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>9O7CHAT - FILE SHARING & ADMIN PRO</title>
+    <title>9O7CHAT - VIP EDITION</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #00ff88; --admin: #ff3e3e; --bg: #0a0e27; }
+        :root { --primary: #00ff88; --admin: #ff3e3e; --vip: #ffd700; --bg: #0a0e27; }
         body { font-family: 'JetBrains Mono', monospace; background: var(--bg); color: #e0e6ff; height: 100vh; overflow: hidden; }
         .sidebar { width: 280px; border-left: 1px solid rgba(0, 255, 136, 0.1); background: rgba(26, 31, 58, 0.95); }
-        .room-item { padding: 12px; margin: 5px 10px; background: rgba(0, 255, 136, 0.05); border-radius: 8px; cursor: pointer; transition: 0.3s; }
+        .room-item { padding: 12px; margin: 5px 10px; background: rgba(0, 255, 136, 0.05); border-radius: 8px; cursor: pointer; transition: 0.3s; position: relative; }
+        .room-item.private::after { content: '🔒'; position: absolute; left: 10px; font-size: 10px; }
         .room-item.active { background: rgba(0, 255, 136, 0.2); border-color: var(--primary); color: var(--primary); border: 1px solid var(--primary); }
-        .messages-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+        .messages-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
         .msg { max-width: 80%; padding: 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); }
         .msg.own { align-self: flex-start; background: rgba(0, 255, 136, 0.1); border-right: 3px solid var(--primary); }
-        .admin-msg { border-right: 3px solid var(--admin) !important; background: rgba(255, 62, 62, 0.1) !important; }
-        .file-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; margin-top: 5px; border: 1px dashed var(--primary); display: flex; align-items: center; gap: 8px; }
-        #uploadProgress { height: 2px; background: var(--primary); width: 0%; transition: 0.3s; }
+        .vip-badge { color: var(--vip); font-weight: bold; text-shadow: 0 0 5px var(--vip); }
+        .upgrade-banner { background: linear-gradient(90deg, #00ff8822, #ffd70022); border: 1px solid var(--vip); padding: 10px; margin: 10px; border-radius: 8px; text-align: center; font-size: 11px; }
     </style>
 </head>
 <body class="flex">
@@ -31,35 +30,31 @@
             <h1 class="text-2xl font-bold text-green-400">9O7CHAT 💀</h1>
             <div id="status" class="text-[10px] mt-2 font-bold uppercase tracking-widest">OFFLINE</div>
         </div>
-        <div class="flex-1 py-4 overflow-y-auto" id="roomsContainer">
-            <div class="room-item" onclick="selectRoom('general', 'الدردشة العامة 💬')">الدردشة العامة 💬</div>
-            <div class="room-item" onclick="selectRoom('hacking', 'Hacking Zone 🛡️')">Hacking Zone 🛡️</div>
-            <div class="room-item" onclick="selectRoom('security', 'Security Lab 🔐')">Security Lab 🔐</div>
+        
+        <div class="flex-1 py-4 overflow-y-auto" id="roomsList">
+            </div>
+
+        <div class="upgrade-banner">
+            <p class="text-white mb-2">تريد رتبة VIP ومساحة أكبر؟</p>
+            <a href="https://t.me/zv88v" target="_blank" class="text-yellow-400 font-bold underline">تواصل معنا: @zv88v</a>
         </div>
+
         <button id="authBtn" class="m-4 p-3 bg-green-500 text-black font-bold rounded shadow-lg hover:scale-105 transition">دخول السيرفر</button>
     </div>
 
     <div class="flex-1 flex flex-col">
         <div class="p-4 border-b border-green-900/30 flex justify-between items-center bg-black/40">
-            <div>
-                <h3 id="roomTitle" class="font-bold text-green-400">إختر قناة</h3>
-                <div id="typingArea" class="text-[10px] text-green-500 italic"></div>
-            </div>
-            <span class="text-[10px] text-gray-500">ID: <span id="userIdDisplay" class="text-green-500">---</span></span>
+            <h3 id="roomTitle" class="font-bold text-green-400">اختر قناة</h3>
+            <button onclick="createNewPrivateRoom()" class="text-[10px] bg-red-900/40 px-2 py-1 rounded border border-red-500 text-red-400">+ غرفة خاصة</button>
         </div>
-
         <div id="messagesContainer" class="messages-container"></div>
-        <div id="uploadProgress"></div>
-
-        <div class="p-4 border-t border-green-900/30 bg-black/50 flex flex-col gap-2">
-            <div class="flex gap-3">
-                <label class="cursor-pointer bg-white/10 p-3 rounded-lg hover:bg-white/20 transition">
-                    📁 <input type="file" id="fileInput" class="hidden" onchange="uploadFile()">
-                </label>
-                
-                <input id="msgInput" type="text" placeholder="اكتب رسالة مشفرة..." class="flex-1 bg-white/5 border border-white/10 rounded-lg p-3 outline-none focus:border-green-400" disabled>
-                <button id="sendBtn" class="px-6 py-2 bg-green-500 text-black font-bold rounded-lg disabled:opacity-30" disabled>إرسال</button>
-            </div>
+        <div id="uploadProgress" class="h-1 bg-green-500 w-0 transition-all"></div>
+        <div class="p-4 border-t border-green-900/30 bg-black/50 flex gap-3">
+            <label class="cursor-pointer bg-white/10 p-3 rounded-lg hover:bg-white/20">
+                📁 <input type="file" id="fileInput" class="hidden" onchange="uploadFile()">
+            </label>
+            <input id="msgInput" type="text" placeholder="اكتب رسالة..." class="flex-1 bg-white/5 border border-white/10 rounded-lg p-3 outline-none focus:border-green-400" disabled>
+            <button id="sendBtn" class="px-6 py-2 bg-green-500 text-black font-bold rounded-lg disabled:opacity-30" disabled>إرسال</button>
         </div>
     </div>
 
@@ -68,7 +63,7 @@
             apiKey: "AIzaSyBj19ByaidBYTANgXtus-m8NBH1pyCps44",
             authDomain: "o7chat-56520.firebaseapp.com",
             projectId: "o7chat-56520",
-            storageBucket: "o7chat-56520.appspot.com", // تأكد من صحة هذا الرابط من الفايربيز
+            storageBucket: "o7chat-56520.appspot.com",
             messagingSenderId: "654634327834",
             appId: "1:654634327834:web:5e3c9700be11fbf6ed96a3"
         };
@@ -77,19 +72,52 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
         const storage = firebase.storage();
-        const MY_ADMIN_ID = "FlIqLV"; 
         
+        const MY_ADMIN_ID = "FlIqLV"; 
         let currentUser, currentRoom, msgUnsub;
 
         auth.onAuthStateChanged(user => {
             currentUser = user;
-            document.getElementById('status').textContent = user ? (user.uid.startsWith(MY_ADMIN_ID) ? 'ADMIN MODE 💀' : 'ONLINE ✅') : 'OFFLINE';
+            document.getElementById('status').textContent = user ? (user.uid.startsWith(MY_ADMIN_ID) ? 'ADMIN MODE 💀' : 'ONLINE') : 'OFFLINE';
             document.getElementById('status').style.color = user?.uid.startsWith(MY_ADMIN_ID) ? '#ff3e3e' : '#00ff88';
-            document.getElementById('userIdDisplay').textContent = user ? user.uid.slice(0,6) : '---';
+            if(user) listenToRooms();
         });
 
+        function listenToRooms() {
+            db.collection('rooms').onSnapshot(snap => {
+                const list = document.getElementById('roomsList');
+                list.innerHTML = '';
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    const el = document.createElement('div');
+                    el.className = `room-item ${data.isPrivate ? 'private' : ''} ${currentRoom === doc.id ? 'active' : ''}`;
+                    el.textContent = data.name;
+                    el.onclick = () => data.isPrivate ? enterPrivateRoom(doc.id, data.password, data.name) : selectRoom(doc.id, data.name);
+                    list.appendChild(el);
+                });
+            });
+        }
+
+        async function createNewPrivateRoom() {
+            const name = prompt("اسم الغرفة الخاصة:");
+            const pass = prompt("تعيين كود الدخول (PIN):");
+            if(name && pass) {
+                await db.collection('rooms').add({
+                    name: name,
+                    password: pass,
+                    isPrivate: true,
+                    createdBy: currentUser.uid
+                });
+            }
+        }
+
+        function enterPrivateRoom(id, correctPass, name) {
+            const input = prompt("هذه الغرفة خاصة. أدخل كود الدخول:");
+            if(input === correctPass) selectRoom(id, name);
+            else alert("كود خاطئ!");
+        }
+
         function selectRoom(id, name) {
-            if (!currentUser) return alert("سجل دخولك أولاً!");
             currentRoom = id;
             document.getElementById('roomTitle').textContent = name;
             document.getElementById('msgInput').disabled = false;
@@ -107,15 +135,17 @@
                         const m = doc.data();
                         const isMe = m.userId === currentUser?.uid;
                         const isAdmin = m.userId.startsWith(MY_ADMIN_ID);
-                        let fileHtml = m.fileUrl ? `<div class="file-box">📄 <a href="${m.fileUrl}" target="_blank" class="text-blue-400 underline text-xs">تحميل المرفق</a></div>` : '';
-                        
+                        const isVIP = m.rank === "VIP";
+
                         cont.innerHTML += `
                             <div class="msg ${isMe ? 'own' : ''} ${isAdmin ? 'admin-msg' : ''}">
-                                <div class="text-[9px] font-bold ${isAdmin ? 'text-red-500' : 'text-green-500'} mb-1">
-                                    ${isAdmin ? '[ADMIN 💀]' : '[USER]'} ${m.userName}
+                                <div class="text-[9px] mb-1">
+                                    <span class="${isAdmin ? 'text-red-500' : (isVIP ? 'vip-badge' : 'text-green-500')}">
+                                        ${isAdmin ? '[ADMIN 💀]' : (isVIP ? '[👑 VIP]' : '[USER]')}
+                                    </span> ${m.userName}
                                 </div>
                                 <div class="text-sm">${m.text}</div>
-                                ${fileHtml}
+                                ${m.fileUrl ? `<div class="mt-2 border border-dashed border-green-500 p-2 text-[10px]"><a href="${m.fileUrl}" target="_blank">📄 تحميل المرفق المدفوع</a></div>` : ''}
                             </div>`;
                     });
                     cont.scrollTop = cont.scrollHeight;
@@ -123,37 +153,32 @@
         }
 
         async function uploadFile() {
+            // فحص الرتبة للمساحة المدفوعة (تجريبي)
             const file = document.getElementById('fileInput').files[0];
-            if (!file || !currentRoom) return;
-
-            const storageRef = storage.ref(`uploads/${currentRoom}/${Date.now()}_${file.name}`);
-            const uploadTask = storageRef.put(file);
-
-            uploadTask.on('state_changed', 
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    document.getElementById('uploadProgress').style.width = progress + '%';
-                }, 
-                (error) => alert("خطأ في الرفع!"), 
-                async () => {
-                    const url = await uploadTask.snapshot.ref.getDownloadURL();
-                    document.getElementById('uploadProgress').style.width = '0%';
-                    sendMessage(`أرسل ملفاً: ${file.name}`, url);
-                }
-            );
+            if (file.size > 2 * 1024 * 1024 && !currentUser.uid.startsWith(MY_ADMIN_ID)) {
+                return alert("عفواً! حجم الملف كبير. للرفع غير المحدود تواصل مع @zv88v للترقية.");
+            }
+            const storageRef = storage.ref(`uploads/${Date.now()}_${file.name}`);
+            const task = storageRef.put(file);
+            task.on('state_changed', s => {
+                document.getElementById('uploadProgress').style.width = (s.bytesTransferred / s.totalBytes) * 100 + '%';
+            }, null, async () => {
+                const url = await task.snapshot.ref.getDownloadURL();
+                document.getElementById('uploadProgress').style.width = '0';
+                sendMessage(`أرسل ملفاً: ${file.name}`, url);
+            });
         }
 
-        async function sendMessage(textOverride = null, fileUrl = null) {
-            const input = document.getElementById('msgInput');
-            const text = textOverride || input.value;
-            if (!text.trim()) return;
-            if (!textOverride) input.value = '';
-
+        async function sendMessage(txt = null, url = null) {
+            const val = txt || document.getElementById('msgInput').value;
+            if(!val.trim()) return;
+            if(!txt) document.getElementById('msgInput').value = '';
             await db.collection('rooms').doc(currentRoom).collection('messages').add({
-                text: text,
-                fileUrl: fileUrl || null,
+                text: val,
+                fileUrl: url,
                 userId: currentUser.uid,
                 userName: currentUser.uid.startsWith(MY_ADMIN_ID) ? "BLACK_OWNER" : `User_${currentUser.uid.slice(0,4)}`,
+                rank: currentUser.uid.startsWith(MY_ADMIN_ID) ? "ADMIN" : "USER", // هنا يمكنك تغيير الرتبة يدوياً للمشتركين
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
         }
