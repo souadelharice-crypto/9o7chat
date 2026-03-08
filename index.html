@@ -3,572 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>9O7CHAT - Encrypted Real-Time Communication</title>
-    
-    <!-- Tailwind CSS for rapid, responsive styling -->
+    <title>9O7CHAT - Mapped & Encrypted</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- GSAP for exceptional animations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    
-    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-js.download"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
-    
-    <!-- Google Fonts for Premium Typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         :root {
-            /* Primary Colors - Neon Hacker Aesthetic */
-            --primary-neon: #00ff88;
-            --secondary-neon: #00d4ff;
-            --accent-neon: #ff006e;
-            --danger-neon: #ff4757;
-            
-            /* Dark Theme Base */
-            --bg-primary: #0a0e27;
-            --bg-secondary: #1a1f3a;
-            --bg-tertiary: #252d47;
-            
-            /* Text Colors */
-            --text-primary: #e0e6ff;
-            --text-secondary: #a0aec0;
-            --text-tertiary: #718096;
-            
-            /* Glassmorphism */
-            --glass-light: rgba(255, 255, 255, 0.08);
-            --glass-dark: rgba(0, 0, 0, 0.3);
+            --primary-neon: #00ff88; --bg-primary: #0a0e27; --text-primary: #e0e6ff;
         }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            font-family: 'JetBrains Mono', monospace;
-            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1933 100%);
-            color: var(--text-primary);
-        }
-
-        /* Animated Background Grid */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                linear-gradient(0deg, transparent 24%, rgba(0, 255, 136, 0.05) 25%, rgba(0, 255, 136, 0.05) 26%, transparent 27%, transparent 74%, rgba(0, 255, 136, 0.05) 75%, rgba(0, 255, 136, 0.05) 76%, transparent 77%, transparent),
-                linear-gradient(90deg, transparent 24%, rgba(0, 212, 255, 0.05) 25%, rgba(0, 212, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(0, 212, 255, 0.05) 75%, rgba(0, 212, 255, 0.05) 76%, transparent 77%, transparent);
-            background-size: 50px 50px;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        #app {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            height: 100%;
-            display: flex;
-        }
-
-        /* ===== SIDEBAR STYLING ===== */
-        .sidebar {
-            width: 280px;
-            background: rgba(26, 31, 58, 0.8);
-            backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(0, 255, 136, 0.1);
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: var(--primary-neon) transparent;
-        }
-
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .sidebar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .sidebar::-webkit-scrollbar-thumb {
-            background: var(--primary-neon);
-            border-radius: 3px;
-        }
-
-        .sidebar-header {
-            padding: 24px 16px;
-            border-bottom: 1px solid rgba(0, 255, 136, 0.1);
-            background: rgba(0, 255, 136, 0.05);
-        }
-
-        .brand-logo {
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: 3px;
-            background: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-transform: uppercase;
-            font-family: 'Inconsolata', monospace;
-            text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
-        }
-
-        .online-status {
-            font-size: 11px;
-            margin-top: 8px;
-            color: var(--primary-neon);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            background: var(--primary-neon);
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--primary-neon); }
-            50% { opacity: 0.5; box-shadow: 0 0 20px var(--primary-neon); }
-        }
-
-        /* Rooms Section */
-        .rooms-container {
-            flex: 1;
-            padding: 16px;
-            overflow-y: auto;
-        }
-
-        .rooms-label {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-            letter-spacing: 2px;
-        }
-
-        .room-item {
-            padding: 12px 14px;
-            margin-bottom: 8px;
-            background: rgba(0, 255, 136, 0.08);
-            border: 1px solid transparent;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 13px;
-            color: var(--text-secondary);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .room-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .room-item:hover::before {
-            left: 100%;
-        }
-
-        .room-item:hover {
-            background: rgba(0, 255, 136, 0.15);
-            border-color: var(--primary-neon);
-            color: var(--primary-neon);
-            box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
-        }
-
-        .room-item.active {
-            background: rgba(0, 255, 136, 0.2);
-            border-color: var(--primary-neon);
-            color: var(--primary-neon);
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
-        }
-
-        /* Auth Button */
-        .auth-button {
-            margin: 16px;
-            padding: 12px 16px;
-            background: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%);
-            color: var(--bg-primary);
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 13px;
-            font-family: 'JetBrains Mono', monospace;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .auth-button:hover {
-            box-shadow: 0 0 25px rgba(0, 255, 136, 0.4);
-            transform: translateY(-2px);
-        }
-
-        /* ===== MAIN CHAT AREA ===== */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: rgba(15, 25, 51, 0.5);
-            backdrop-filter: blur(10px);
-        }
-
-        /* Chat Header */
-        .chat-header {
-            padding: 16px 24px;
-            border-bottom: 1px solid rgba(0, 255, 136, 0.1);
-            background: rgba(26, 31, 58, 0.6);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--primary-neon);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .header-users {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .user-count-badge {
-            background: rgba(0, 255, 136, 0.2);
-            padding: 4px 8px;
-            border-radius: 12px;
-            color: var(--primary-neon);
-            font-weight: 600;
-        }
-
-        /* Messages Container */
-        .messages-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px;
-            scroll-behavior: smooth;
-        }
-
-        .messages-container::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .messages-container::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .messages-container::-webkit-scrollbar-thumb {
-            background: rgba(0, 255, 136, 0.3);
-            border-radius: 4px;
-        }
-
-        /* Message Styles */
-        .message {
-            display: flex;
-            margin-bottom: 16px;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: messageSlide 0.5s ease forwards;
-        }
-
-        @keyframes messageSlide {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .message.own {
-            justify-content: flex-end;
-        }
-
-        .message-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            margin-right: 12px;
-            border: 2px solid var(--primary-neon);
-            flex-shrink: 0;
-            object-fit: cover;
-        }
-
-        .message.own .message-avatar {
-            margin-right: 0;
-            margin-left: 12px;
-            order: 2;
-        }
-
-        .message-content {
-            max-width: 60%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .message-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 6px;
-            font-size: 12px;
-        }
-
-        .message-username {
-            font-weight: 600;
-            color: var(--primary-neon);
-        }
-
-        .message-time {
-            color: var(--text-tertiary);
-            font-size: 11px;
-        }
-
-        .message-text {
-            background: rgba(0, 255, 136, 0.1);
-            border: 1px solid rgba(0, 255, 136, 0.2);
-            border-radius: 8px;
-            padding: 12px 14px;
-            color: var(--text-primary);
-            word-wrap: break-word;
-            line-height: 1.4;
-            backdrop-filter: blur(10px);
-        }
-
-        .message.own .message-text {
-            background: rgba(0, 212, 255, 0.15);
-            border-color: rgba(0, 212, 255, 0.3);
-        }
-
-        /* Input Area */
-        .input-container {
-            padding: 20px 24px;
-            border-top: 1px solid rgba(0, 255, 136, 0.1);
-            background: rgba(26, 31, 58, 0.6);
-            display: flex;
-            gap: 12px;
-            align-items: flex-end;
-        }
-
-        .input-wrapper {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            background: rgba(0, 255, 136, 0.08);
-            border: 1px solid rgba(0, 255, 136, 0.2);
-            border-radius: 8px;
-            padding: 0 14px;
-            transition: all 0.3s ease;
-        }
-
-        .input-wrapper:focus-within {
-            background: rgba(0, 255, 136, 0.12);
-            border-color: var(--primary-neon);
-            box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
-        }
-
-        #messageInput {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--text-primary);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            padding: 12px 0;
-            outline: none;
-        }
-
-        #messageInput::placeholder {
-            color: var(--text-tertiary);
-        }
-
-        .send-btn {
-            padding: 10px 16px;
-            background: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%);
-            color: var(--bg-primary);
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 12px;
-            font-family: 'JetBrains Mono', monospace;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .send-btn:hover {
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
-            transform: translateY(-2px);
-        }
-
-        .send-btn:active {
-            transform: translateY(0);
-        }
-
-        /* Loading & Empty States */
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: var(--text-secondary);
-            text-align: center;
-        }
-
-        .empty-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-
-        .empty-text {
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-
-        .empty-subtext {
-            font-size: 12px;
-            color: var(--text-tertiary);
-        }
-
-        /* Loading Spinner */
-        .loading {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(0, 255, 136, 0.3);
-            border-radius: 50%;
-            border-top-color: var(--primary-neon);
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .sidebar {
-                display: none;
-            }
-
-            .message-content {
-                max-width: 85%;
-            }
-
-            .input-container {
-                flex-wrap: wrap;
-            }
-
-            .send-btn {
-                width: 100%;
-            }
-        }
+        body { font-family: 'JetBrains Mono', monospace; background: var(--bg-primary); color: var(--text-primary); height: 100vh; overflow: hidden; }
+        .sidebar { width: 280px; border-right: 1px solid rgba(0, 255, 136, 0.1); background: rgba(26, 31, 58, 0.8); backdrop-filter: blur(20px); }
+        .room-item { padding: 12px; margin: 8px; background: rgba(0, 255, 136, 0.05); border-radius: 8px; cursor: pointer; transition: 0.3s; border: 1px solid transparent; }
+        .room-item:hover, .room-item.active { background: rgba(0, 255, 136, 0.15); border-color: var(--primary-neon); color: var(--primary-neon); }
+        .messages-container { flex: 1; overflow-y: auto; padding: 20px; }
+        .message-text { background: rgba(0, 255, 136, 0.1); padding: 10px; border-radius: 8px; margin-top: 4px; }
+        .own .message-text { background: rgba(0, 212, 255, 0.1); }
     </style>
 </head>
-<body>
-    <div id="app">
-        <!-- SIDEBAR -->
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <div class="brand-logo">9O7CHAT</div>
-                <div class="online-status">
-                    <span class="status-dot"></span>
-                    <span id="onlineStatus">Connecting...</span>
-                </div>
-            </div>
-
-            <div class="rooms-container">
-                <div class="rooms-label">Channels</div>
-                <div id="roomsList"></div>
-            </div>
-
-            <button id="authBtn" class="auth-button">Sign In</button>
+<body class="flex">
+    <div class="sidebar flex flex-col">
+        <div class="p-6 border-b border-green-900/30">
+            <h1 class="text-2xl font-bold tracking-widest text-green-400">9O7CHAT</h1>
+            <p id="onlineStatus" class="text-xs text-green-600 mt-2">Connecting...</p>
         </div>
+        <div class="flex-1 p-4 overflow-y-auto">
+            <h2 class="text-xs uppercase tracking-widest text-gray-500 mb-4">Channels</h2>
+            <div id="roomsList"></div>
+        </div>
+        <button id="authBtn" class="m-4 p-3 bg-green-500 text-black font-bold rounded hover:bg-green-400 transition">Sign In</button>
+    </div>
 
-        <!-- MAIN CHAT AREA -->
-        <div class="main-content">
-            <!-- Chat Header -->
-            <div class="chat-header">
-                <div class="header-title" id="roomTitle">Select a Room</div>
-                <div class="header-users">
-                    <span>Online:</span>
-                    <span class="user-count-badge" id="userCount">0</span>
-                </div>
-            </div>
-
-            <!-- Messages -->
-            <div class="messages-container" id="messagesContainer">
-                <div class="empty-state">
-                    <div class="empty-icon">🔐</div>
-                    <div class="empty-text">Select a room to start chatting</div>
-                    <div class="empty-subtext">Real-time encrypted communication</div>
-                </div>
-            </div>
-
-            <!-- Input -->
-            <div class="input-container">
-                <div class="input-wrapper">
-                    <input 
-                        type="text" 
-                        id="messageInput" 
-                        placeholder="Type your message..." 
-                        disabled
-                    >
-                </div>
-                <button id="sendBtn" class="send-btn" disabled>Send</button>
-            </div>
+    <div class="flex-1 flex flex-col bg-black/20 backdrop-blur-md">
+        <div class="p-4 border-b border-green-900/30 flex justify-between">
+            <h3 id="roomTitle" class="font-bold text-green-400">Select a Room</h3>
+            <span class="text-xs text-gray-500">Online: <span id="userCount" class="text-green-500">0</span></span>
+        </div>
+        <div id="messagesContainer" class="messages-container flex flex-col gap-4"></div>
+        <div class="p-6 border-t border-green-900/30 flex gap-4">
+            <input id="messageInput" type="text" placeholder="Type secret message..." class="flex-1 bg-green-900/10 border border-green-900/50 rounded p-3 outline-none focus:border-green-400" disabled>
+            <button id="sendBtn" class="px-6 py-2 bg-green-500 text-black font-bold rounded disabled:opacity-50" disabled>SEND</button>
         </div>
     </div>
 
     <script>
-        // ============================================================
-        // 9O7CHAT - FIREBASE CONFIGURATION
-        // ============================================================
-        // STEP 1: Add your Firebase project credentials below
-        // Get these from Firebase Console > Project Settings > Service Account
-        // 
-        // const firebaseConfig = {
-        //     apiKey: "AIzaSyBj19ByaidBYTANgXtus-m8NBH1pyCps44",
-        //     authDomain: "o7chat-56520.firebaseapp.com",
-        //     projectId: "o7chat-56520",
-        //     storageBucket: "o7chat-56520.firebasestorage.app",
-        //     messagingSenderId: "654634327834",
-        //     appId: "1:654634327834:web:5e3c9700be11fbf6ed96a3"
-        // };
-        //
-        // EXAMPLE (replace with your actual config):
         const firebaseConfig = {
             apiKey: "AIzaSyBj19ByaidBYTANgXtus-m8NBH1pyCps44",
             authDomain: "o7chat-56520.firebaseapp.com",
@@ -578,341 +59,98 @@
             appId: "1:654634327834:web:5e3c9700be11fbf6ed96a3"
         };
 
-        // ============================================================
-        // Initialize Firebase
-        // ============================================================
-        let app, auth, db;
-        let currentUser = null;
-        let currentRoom = null;
-        let messagesUnsubscribe = null;
-        let usersUnsubscribe = null;
+        let db, auth, currentUser, currentRoom, msgUnsub;
 
-        async function initializeFirebase() {
-            try {
-                app = firebase.initializeApp(firebaseConfig);
-                auth = firebase.auth();
-                db = firebase.firestore();
+        async function init() {
+            const app = firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            auth = firebase.auth();
 
-                // Enable offline persistence
-                await db.enablePersistence().catch((err) => {
-                    if (err.code !== 'failed-precondition') {
-                        console.log('Offline persistence not available');
-                    }
+            auth.onAuthStateChanged(user => {
+                currentUser = user;
+                document.getElementById('authBtn').textContent = user ? 'Sign Out' : 'Sign In';
+                if(user) updatePresence(true);
+            });
+
+            await ensureRooms();
+            listenRooms();
+        }
+
+        async function ensureRooms() {
+            const defaults = [
+                { id: 'general', name: 'الدردشة العامة 💬' },
+                { id: 'hacking', name: 'Hacking & Security 🛡️' },
+                { id: 'dev', name: 'Programming 💻' }
+            ];
+            for (const r of defaults) {
+                const ref = db.collection('rooms').doc(r.id);
+                const snap = await ref.get();
+                if (!snap.exists) await ref.set({ name: r.name, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            }
+        }
+
+        function listenRooms() {
+            db.collection('rooms').onSnapshot(snap => {
+                const list = document.getElementById('roomsList');
+                list.innerHTML = '';
+                snap.forEach(doc => {
+                    const el = document.createElement('div');
+                    el.className = `room-item ${currentRoom === doc.id ? 'active' : ''}`;
+                    el.textContent = doc.data().name;
+                    el.onclick = () => selectRoom(doc.id, doc.data().name);
+                    list.appendChild(el);
                 });
-
-                setupAuthListener();
-                loadRooms();
-                setupAnimations();
-                
-                updateOnlineStatus(true);
-                window.addEventListener('beforeunload', () => updateOnlineStatus(false));
-            } catch (error) {
-                console.error('Firebase initialization error:', error);
-                showError('Failed to connect to server. Check your Firebase config.');
-            }
-        }
-
-        // ============================================================
-        // AUTHENTICATION
-        // ============================================================
-        function setupAuthListener() {
-            auth.onAuthStateChanged(async (user) => {
-                if (user) {
-                    currentUser = {
-                        uid: user.uid,
-                        email: user.email || `User${user.uid.slice(0, 6)}`,
-                        name: user.displayName || `User${user.uid.slice(0, 6)}`
-                    };
-                    document.getElementById('authBtn').textContent = 'Sign Out';
-                    updateOnlineStatus(true);
-                } else {
-                    currentUser = null;
-                    document.getElementById('authBtn').textContent = 'Sign In';
-                    clearChat();
-                }
             });
         }
 
-        async function handleAuth() {
-            if (currentUser) {
-                auth.signOut();
-            } else {
-                try {
-                    const result = await auth.signInAnonymously();
-                    currentUser = {
-                        uid: result.user.uid,
-                        email: `User${result.user.uid.slice(0, 6)}`,
-                        name: `User${result.user.uid.slice(0, 6)}`
-                    };
-                } catch (error) {
-                    console.error('Auth error:', error);
-                    showError('Authentication failed');
-                }
-            }
-        }
-
-        // ============================================================
-        // ROOMS MANAGEMENT
-        // ============================================================
-        async function loadRooms() {
-            const defaultRooms = ['general', 'engineering', 'design', 'marketing', 'random'];
-            const roomsList = document.getElementById('roomsList');
-            roomsList.innerHTML = '';
-
-            for (const roomName of defaultRooms) {
-                const roomEl = document.createElement('div');
-                roomEl.className = 'room-item';
-                roomEl.textContent = `# ${roomName}`;
-                roomEl.onclick = () => selectRoom(roomName);
-                roomsList.appendChild(roomEl);
-
-                // Stagger animation
-                gsap.fromTo(roomEl, 
-                    { opacity: 0, x: -20 },
-                    { opacity: 1, x: 0, duration: 0.5, delay: defaultRooms.indexOf(roomName) * 0.1 }
-                );
-            }
-
-            // Select first room by default
-            if (defaultRooms.length > 0) {
-                selectRoom(defaultRooms[0]);
-            }
-        }
-
-        function selectRoom(roomName) {
-            currentRoom = roomName;
-            
-            // Update active state
-            document.querySelectorAll('.room-item').forEach(el => {
-                el.classList.remove('active');
-            });
-            event.target.classList.add('active');
-
-            // Update header
-            document.getElementById('roomTitle').textContent = `# ${roomName}`;
-
-            // Load messages
+        function selectRoom(id, name) {
+            currentRoom = id;
+            document.getElementById('roomTitle').textContent = name;
+            document.getElementById('messageInput').disabled = !currentUser;
+            document.getElementById('sendBtn').disabled = !currentUser;
             loadMessages();
-            loadOnlineUsers();
         }
 
-        // ============================================================
-        // MESSAGES
-        // ============================================================
-        async function loadMessages() {
-            if (!currentRoom || !currentUser) {
-                clearChat();
-                return;
-            }
-
-            // Unsubscribe from previous listener
-            if (messagesUnsubscribe) messagesUnsubscribe();
-
+        function loadMessages() {
+            if (msgUnsub) msgUnsub();
             const container = document.getElementById('messagesContainer');
-            container.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-text">Loading messages...</div></div>';
-
-            const messagesRef = db.collection('rooms').doc(currentRoom).collection('messages');
-            messagesUnsubscribe = messagesRef
-                .orderBy('timestamp', 'asc')
-                .limit(50)
-                .onSnapshot(
-                    (snapshot) => {
-                        if (snapshot.empty) {
-                            container.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-text">No messages yet</div><div class="empty-subtext">Be the first to send a message</div></div>';
-                            return;
-                        }
-
-                        container.innerHTML = '';
-                        snapshot.forEach((doc) => {
-                            const msg = doc.data();
-                            displayMessage(msg);
-                        });
-
-                        // Auto-scroll to bottom
-                        setTimeout(() => {
-                            container.scrollTop = container.scrollHeight;
-                        }, 100);
-                    },
-                    (error) => {
-                        console.error('Error loading messages:', error);
-                        showError('Failed to load messages');
-                    }
-                );
-
-            // Enable input
-            document.getElementById('messageInput').disabled = false;
-            document.getElementById('sendBtn').disabled = false;
-        }
-
-        function displayMessage(msg) {
-            const container = document.getElementById('messagesContainer');
-            const isOwn = msg.userId === currentUser.uid;
-
-            const msgEl = document.createElement('div');
-            msgEl.className = `message ${isOwn ? 'own' : ''}`;
-
-            const timeOptions = { hour: '2-digit', minute: '2-digit' };
-            const time = new Date(msg.timestamp.toDate()).toLocaleTimeString('en-US', timeOptions);
-
-            msgEl.innerHTML = `
-                <img src="${msg.avatar}" alt="${msg.userName}" class="message-avatar">
-                <div class="message-content">
-                    <div class="message-header">
-                        <span class="message-username">${escapeHtml(msg.userName)}</span>
-                        <span class="message-time">${time}</span>
-                    </div>
-                    <div class="message-text">${escapeHtml(msg.text)}</div>
-                </div>
-            `;
-
-            container.appendChild(msgEl);
+            msgUnsub = db.collection('rooms').doc(currentRoom).collection('messages')
+                .orderBy('timestamp', 'asc').limit(50).onSnapshot(snap => {
+                    container.innerHTML = '';
+                    snap.forEach(doc => {
+                        const m = doc.data();
+                        const isOwn = m.userId === currentUser?.uid;
+                        container.innerHTML += `
+                            <div class="flex ${isOwn ? 'justify-end' : ''}">
+                                <div class="max-w-[70%] ${isOwn ? 'own' : ''}">
+                                    <span class="text-[10px] text-gray-500">${m.userName}</span>
+                                    <div class="message-text">${m.text}</div>
+                                </div>
+                            </div>`;
+                    });
+                    container.scrollTop = container.scrollHeight;
+                });
         }
 
         async function sendMessage() {
-            if (!currentRoom || !currentUser) {
-                showError('Not authenticated');
-                return;
-            }
-
             const input = document.getElementById('messageInput');
-            const text = input.value.trim();
-
-            if (!text) return;
-
-            const btn = document.getElementById('sendBtn');
-            btn.disabled = true;
-
-            try {
-                const avatar = getAvatarUrl(currentUser.uid);
-
-                await db.collection('rooms').doc(currentRoom).collection('messages').add({
-                    text: text,
-                    userId: currentUser.uid,
-                    userName: currentUser.name,
-                    avatar: avatar,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    room: currentRoom
-                });
-
-                input.value = '';
-                btn.disabled = false;
-                input.focus();
-            } catch (error) {
-                console.error('Error sending message:', error);
-                showError('Failed to send message');
-                btn.disabled = false;
-            }
+            if (!input.value.trim() || !currentRoom) return;
+            await db.collection('rooms').doc(currentRoom).collection('messages').add({
+                text: input.value,
+                userId: currentUser.uid,
+                userName: currentUser.displayName || `Anon_${currentUser.uid.slice(0,4)}`,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                room: currentRoom,
+                avatar: `https://api.dicebear.com/7.x/cyberpunk/svg?seed=${currentUser.uid}`
+            });
+            input.value = '';
         }
 
-        // ============================================================
-        // ONLINE USERS
-        // ============================================================
-        async function loadOnlineUsers() {
-            if (!currentRoom) return;
+        document.getElementById('authBtn').onclick = () => currentUser ? auth.signOut() : auth.signInAnonymously();
+        document.getElementById('sendBtn').onclick = sendMessage;
+        document.getElementById('messageInput').onkeypress = e => e.key === 'Enter' && sendMessage();
 
-            if (usersUnsubscribe) usersUnsubscribe();
-
-            const usersRef = db.collection('rooms').doc(currentRoom).collection('users');
-            usersUnsubscribe = usersRef.onSnapshot(
-                (snapshot) => {
-                    document.getElementById('userCount').textContent = snapshot.size;
-                },
-                (error) => console.error('Error loading users:', error)
-            );
-        }
-
-        async function updateOnlineStatus(isOnline) {
-            if (!currentUser || !currentRoom) return;
-
-            try {
-                const userRef = db.collection('rooms').doc(currentRoom).collection('users').doc(currentUser.uid);
-                
-                if (isOnline) {
-                    await userRef.set({
-                        name: currentUser.name,
-                        avatar: getAvatarUrl(currentUser.uid),
-                        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                } else {
-                    await userRef.delete();
-                }
-
-                document.getElementById('onlineStatus').textContent = isOnline ? 'Online' : 'Offline';
-            } catch (error) {
-                console.error('Error updating online status:', error);
-            }
-        }
-
-        // ============================================================
-        // UTILITIES
-        // ============================================================
-        function getAvatarUrl(userId) {
-            // DiceBear API - generates consistent avatars based on user ID
-            return `https://api.dicebear.com/7.x/cyberpunk/svg?seed=${userId}&scale=80`;
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function clearChat() {
-            document.getElementById('messagesContainer').innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">🔐</div>
-                    <div class="empty-text">Sign in to start chatting</div>
-                    <div class="empty-subtext">Click the sign in button in the sidebar</div>
-                </div>
-            `;
-        }
-
-        function showError(message) {
-            console.error(message);
-            // Could add a toast notification here
-        }
-
-        // ============================================================
-        // ANIMATIONS & INTERACTIONS
-        // ============================================================
-        function setupAnimations() {
-            // Initial page load animation
-            gsap.fromTo('#app',
-                { opacity: 0 },
-                { opacity: 1, duration: 1 }
-            );
-
-            // Sidebar slide-in
-            gsap.fromTo('.sidebar',
-                { x: -280 },
-                { x: 0, duration: 0.8, ease: 'power2.out' }
-            );
-
-            // Main content slide-in
-            gsap.fromTo('.main-content',
-                { opacity: 0 },
-                { opacity: 1, duration: 0.8, delay: 0.2 }
-            );
-        }
-
-        // ============================================================
-        // EVENT LISTENERS
-        // ============================================================
-        document.getElementById('authBtn').addEventListener('click', handleAuth);
-        
-        document.getElementById('sendBtn').addEventListener('click', sendMessage);
-        
-        document.getElementById('messageInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
-        // ============================================================
-        // INITIALIZATION
-        // ============================================================
-        window.addEventListener('DOMContentLoaded', initializeFirebase);
+        window.onload = init;
     </script>
 </body>
 </html>
