@@ -345,6 +345,53 @@ html,body{height:100%;font-family:'Tajawal',sans-serif;background:#000;color:#ff
 .empty .ei{font-size:48px;margin-bottom:12px;opacity:.5}
 .empty h3{font-size:16px;font-weight:700;color:var(--t2);margin-bottom:5px}
 .empty p{font-size:13px;line-height:1.6}
+
+/* ═══ ROOMS ═══ */
+#page-rooms{}
+.rooms-hero{padding:20px 16px 0}
+.rooms-hero-title{font-size:26px;font-weight:900;letter-spacing:-.5px;margin-bottom:4px}
+.rooms-hero-title span{color:var(--acc)}
+.rooms-hero-sub{font-size:13px;color:var(--t3);margin-bottom:16px}
+.rooms-hero-btns{display:flex;gap:10px;margin-bottom:20px}
+.room-card{margin:0 14px 12px;border-radius:14px;background:var(--s2);border:1px solid var(--border);overflow:hidden;cursor:pointer;transition:all .15s;position:relative}
+.room-card:active{transform:scale(.98)}
+.room-card-top{padding:14px 14px 10px;display:flex;align-items:flex-start;gap:12px}
+.room-emoji{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.room-info{flex:1;min-width:0}
+.room-name{font-size:16px;font-weight:800;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.room-desc{font-size:12px;color:var(--t3);line-height:1.4;margin-bottom:6px}
+.room-members-strip{display:flex;align-items:center;gap:-4px;padding:0 14px 12px}
+.rm-av{width:26px;height:26px;border-radius:50%;border:2px solid var(--s2);background:var(--s3);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;margin-right:-8px;flex-shrink:0}
+.room-count{font-size:12px;color:var(--t3);margin-right:auto;margin-left:10px}
+.room-live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-left:5px;box-shadow:0 0 6px var(--green);animation:livePulse 1.5s ease infinite}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.8)}}
+.room-locked{position:absolute;top:12px;left:12px;background:var(--s3);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--t3);display:flex;align-items:center;gap:4px}
+.room-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(224,64,251,.12);color:var(--acc);border:1px solid rgba(224,64,251,.2)}
+
+/* Room View (full screen) */
+#room-view{position:fixed;inset:0;z-index:200;background:#000;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1)}
+#room-view.open{transform:translateX(0)}
+.room-topbar{display:flex;align-items:center;gap:9px;padding:10px 11px;background:rgba(0,0,0,.96);backdrop-filter:blur(16px);border-bottom:1px solid var(--border2);flex-shrink:0;padding-top:max(10px,env(safe-area-inset-top))}
+.room-topbar-info{flex:1;min-width:0}
+.room-topbar-name{font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.room-topbar-meta{font-size:11px;color:var(--t3);margin-top:1px}
+/* Members sidebar toggle */
+.room-members-panel{position:absolute;top:0;right:0;bottom:0;width:220px;background:var(--s1);border-right:1px solid var(--border2);transform:translateX(100%);transition:transform .25s ease;z-index:10;overflow-y:auto;padding-top:60px}
+.room-members-panel.open{transform:translateX(0)}
+.rmp-title{font-size:13px;font-weight:700;color:var(--t3);padding:12px 14px 8px;text-transform:uppercase;letter-spacing:.6px}
+.rmp-row{display:flex;align-items:center;gap:9px;padding:8px 14px}
+.rmp-av{width:36px;height:36px;border-radius:50%;background:var(--s3);background-size:cover;background-position:center;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;position:relative}
+.rmp-online{position:absolute;bottom:0;right:0;width:10px;height:10px;background:var(--green);border-radius:50%;border:2px solid var(--s1)}
+.rmp-name{font-size:13px;font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rmp-host{font-size:10px;color:var(--acc);font-weight:700}
+/* Room messages */
+.room-msgs{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:3px}
+.room-sys-msg{text-align:center;font-size:11px;color:var(--t3);padding:4px 0;font-style:italic}
+.typing-indicator{padding:4px 10px;font-size:12px;color:var(--t3);font-style:italic;min-height:22px}
+/* Code display */
+.room-code-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(224,64,251,.1);border:1px solid rgba(224,64,251,.25);border-radius:10px;padding:5px 12px;font-size:13px;font-weight:700;color:var(--acc);cursor:pointer;letter-spacing:2px}
+.room-code-badge:active{background:rgba(224,64,251,.2)}
+
 </style>
 </head>
 <body>
@@ -436,11 +483,53 @@ html,body{height:100%;font-family:'Tajawal',sans-serif;background:#000;color:#ff
     <div id="dm-list" style="flex:1;overflow-y:auto"><div class="empty"><div class="ei">💬</div><h3>لا توجد رسائل</h3><p>ابحث عن أصدقاء لبدء محادثة</p></div></div>
   </div>
 
+  <!-- ROOMS PAGE -->
+  <div class="page" id="page-rooms">
+    <div class="topbar">
+      <div class="topbar-title"><span>9o7</span>Rooms</div>
+      <button class="ico-btn" id="my-rooms-btn" onclick="openMyRooms()" title="غرفي">🚪</button>
+    </div>
+    <div class="rooms-hero">
+      <div class="rooms-hero-title">غرف <span>حية</span> 🔥</div>
+      <div class="rooms-hero-sub">ادخل كود الغرفة أو أنشئ غرفتك الخاصة</div>
+      <div class="rooms-hero-btns">
+        <button class="btn-acc" style="flex:1;padding:11px" onclick="openCreateRoom()">+ إنشاء غرفة</button>
+        <button class="btn-ghost" style="flex:1;padding:11px" onclick="openJoinRoom()">🔑 ادخل بكود</button>
+      </div>
+    </div>
+    <div id="rooms-list"><div class="empty"><div class="ei">🏠</div><h3>لا توجد غرف بعد</h3><p>أنشئ أول غرفة أو انضم بكود</p></div></div>
+  </div>
+
+  <!-- ROOM VIEW -->
+  <div id="room-view">
+    <div class="room-topbar">
+      <button class="ico-btn" style="background:none;border:none;color:#fff" onclick="closeRoom()">←</button>
+      <div class="room-topbar-info">
+        <div class="room-topbar-name" id="rv-name"></div>
+        <div class="room-topbar-meta" id="rv-meta"></div>
+      </div>
+      <div class="room-code-badge" id="rv-code" onclick="copyRoomCode()"></div>
+      <button class="ico-btn" onclick="toggleMembersPanel()">👥</button>
+    </div>
+    <div class="room-members-panel" id="members-panel">
+      <div class="rmp-title">الأعضاء</div>
+      <div id="members-list"></div>
+    </div>
+    <div class="room-msgs" id="room-msgs"></div>
+    <div class="typing-indicator" id="room-typing"></div>
+    <div class="chat-input" style="flex-shrink:0">
+      <div class="ci-inner">
+        <textarea class="ci-ta" id="room-ta" placeholder="اكتب للجميع..." rows="1" onkeydown="onRoomKey(event)" oninput="autoH(this);onRoomTyping()"></textarea>
+      </div>
+      <button class="ci-send" onclick="sendRoomMsg()">▶</button>
+    </div>
+  </div>
+
   <!-- NAV -->
   <div id="nav">
     <button class="nb on" id="nb-home" onclick="goPage('page-home')"><span class="nb-ico">🏠</span><span class="nb-lbl">الرئيسية</span></button>
     <button class="nb" id="nb-search" onclick="goPage('page-search')"><span class="nb-ico">🔍</span><span class="nb-lbl">بحث</span></button>
-    <button class="nb" id="nb-post" onclick="goPage('page-post')"><span class="nb-ico">➕</span><span class="nb-lbl">نشر</span></button>
+    <button class="nb" id="nb-rooms" onclick="goPage('page-rooms')"><span class="nb-ico">🔥</span><span class="nb-lbl">Rooms</span></button>
     <button class="nb" id="nb-notifs" onclick="goPage('page-notifs')"><span class="nb-ico">🔔</span><span class="nb-lbl">إشعارات</span><div class="nb-dot" id="notif-dot">0</div></button>
     <button class="nb" id="nb-profile" onclick="goPage('page-profile')"><span class="nb-ico">👤</span><span class="nb-lbl">ملفي</span></button>
   </div>
@@ -542,6 +631,53 @@ html,body{height:100%;font-family:'Tajawal',sans-serif;background:#000;color:#ff
   <img id="lbx-img" src="" alt="" style="display:none">
   <video id="lbx-vid" controls style="display:none"></video>
 </div>
+
+<!-- CREATE ROOM MODAL -->
+<div class="mbg center" id="create-room-modal" onclick="if(event.target===this)closeMd('create-room-modal')">
+  <div class="msheet">
+    <div class="mtitle">إنشاء غرفة جديدة 🔥</div>
+    <div class="mbody">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <label class="af-lbl">اسم الغرفة</label>
+          <input class="af-inp" type="text" id="cr-name" placeholder="مثال: غرفة الألعاب 🎮" maxlength="30">
+        </div>
+        <div>
+          <label class="af-lbl">وصف قصير (اختياري)</label>
+          <input class="af-inp" type="text" id="cr-desc" placeholder="موضوع الغرفة..." maxlength="60">
+        </div>
+        <div>
+          <label class="af-lbl" style="margin-bottom:8px">الإيموجي</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px" id="emoji-picker">
+            ${['🎮','🎵','💬','🔥','😂','❤️','🌍','📚','🎨','⚽','🏀','🎬','🍕','✈️','💡'].map(e=>`<span onclick="selEmoji('${e}',this)" style="font-size:24px;cursor:pointer;padding:4px;border-radius:8px;transition:background .1s" class="ep-opt">${e}</span>`).join('')}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="checkbox" id="cr-private" style="width:18px;height:18px;accent-color:var(--acc)">
+          <label for="cr-private" style="font-size:14px;cursor:pointer">🔒 غرفة خاصة (بكود فقط)</label>
+        </div>
+        <button class="btn-acc" onclick="createRoom()">إنشاء الغرفة ✦</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JOIN ROOM MODAL -->
+<div class="mbg center" id="join-room-modal" onclick="if(event.target===this)closeMd('join-room-modal')">
+  <div class="msheet">
+    <div class="mtitle">ادخل بكود 🔑</div>
+    <div class="mbody">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label class="af-lbl">كود الغرفة (4 أرقام)</label>
+          <input class="af-inp" type="text" id="join-code" placeholder="0000" maxlength="4" style="font-size:28px;text-align:center;letter-spacing:8px;font-weight:900" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+        </div>
+        <button class="btn-acc" onclick="joinByCode()">دخول ←</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -691,7 +827,7 @@ function initApp(){
 // ══════════════════════════════════════
 //  NAVIGATION
 // ══════════════════════════════════════
-const NB_MAP={'page-home':'nb-home','page-search':'nb-search','page-post':'nb-post','page-notifs':'nb-notifs','page-profile':'nb-profile','page-msgs':null};
+const NB_MAP={'page-home':'nb-home','page-search':'nb-search','page-rooms':'nb-rooms','page-post':null,'page-notifs':'nb-notifs','page-profile':'nb-profile','page-msgs':null};
 function goPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.getElementById(id).classList.add('on');
@@ -699,6 +835,7 @@ function goPage(id){
   const nb=NB_MAP[id];if(nb)document.getElementById(nb).classList.add('on');
   if(id==='page-profile')renderMyProfile();
   if(id==='page-notifs'){document.getElementById('notif-dot').classList.remove('show');markNotifsRead();}
+  if(id==='page-rooms')loadRooms();
 }
 
 // ══════════════════════════════════════
@@ -1575,6 +1712,250 @@ document.addEventListener('keydown',e=>{
 });
 window.addEventListener('error',e=>console.error('[9o7]',e.message));
 window.addEventListener('unhandledrejection',e=>{e.preventDefault();console.error('[9o7]',e.reason);});
+
+// ══════════════════════════════════════
+//  ROOMS
+// ══════════════════════════════════════
+let ROOM_ID=null, ROOM_DATA=null, typingTmr=null, membersPanelOpen=false;
+const EMOJIS=['🎮','🎵','💬','🔥','😂','❤️','🌍','📚','🎨','⚽','🏀','🎬','🍕','✈️','💡'];
+let selectedEmoji='💬';
+
+function openCreateRoom(){openMd('create-room-modal');selectedEmoji='💬';document.getElementById('cr-name').value='';document.getElementById('cr-desc').value='';document.getElementById('cr-private').checked=false;document.querySelectorAll('.ep-opt').forEach(e=>e.style.background='');}
+function openJoinRoom(){openMd('join-room-modal');document.getElementById('join-code').value='';}
+function selEmoji(e,el){selectedEmoji=e;document.querySelectorAll('.ep-opt').forEach(o=>o.style.background='');el.style.background='rgba(224,64,251,.2)';}
+
+function genCode(){return String(Math.floor(1000+Math.random()*9000));}
+
+async function createRoom(){
+  const name=document.getElementById('cr-name').value.trim();
+  if(!name)return toast('أدخل اسم الغرفة');
+  const desc=document.getElementById('cr-desc').value.trim();
+  const isPrivate=document.getElementById('cr-private').checked;
+  // Generate unique code
+  let code=genCode();
+  const existSn=await DB.ref('rooms').orderByChild('code').equalTo(code).once('value');
+  if(existSn.exists())code=genCode(); // retry once
+  const rid=DB.ref('rooms').push().key;
+  const room={
+    id:rid,name,desc,emoji:selectedEmoji,code,
+    isPrivate,hostUid:ME.uid,
+    createdAt:firebase.database.ServerValue.TIMESTAMP,
+    membersCount:1,active:true
+  };
+  await DB.ref('rooms/'+rid).set(room);
+  await DB.ref('rooms/'+rid+'/members/'+ME.uid).set({uid:ME.uid,joinedAt:firebase.database.ServerValue.TIMESTAMP});
+  closeMd('create-room-modal');
+  toast('✅ تم إنشاء الغرفة! الكود: '+code);
+  openRoomView(room);
+}
+
+async function joinByCode(){
+  const code=document.getElementById('join-code').value.trim();
+  if(code.length!==4)return toast('الكود 4 أرقام');
+  const sn=await DB.ref('rooms').orderByChild('code').equalTo(code).once('value');
+  if(!sn.exists())return toast('❌ كود غير صحيح');
+  let room=null;sn.forEach(c=>{room={id:c.key,...c.val()};});
+  if(!room.active)return toast('الغرفة مغلقة');
+  await DB.ref('rooms/'+room.id+'/members/'+ME.uid).set({uid:ME.uid,joinedAt:firebase.database.ServerValue.TIMESTAMP});
+  DB.ref('rooms/'+room.id+'/membersCount').transaction(n=>(n||0)+1);
+  closeMd('join-room-modal');
+  openRoomView(room);
+}
+
+async function loadRooms(){
+  const el=document.getElementById('rooms-list');
+  el.innerHTML='<div style="text-align:center;padding:24px;font-size:13px;color:var(--t3)">جارٍ التحميل...</div>';
+  const sn=await DB.ref('rooms').orderByChild('active').equalTo(true).limitToLast(30).once('value');
+  const rooms=[];sn.forEach(c=>rooms.push({id:c.key,...c.val()}));
+  rooms.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if(!rooms.length){el.innerHTML='<div class="empty"><div class="ei">🏠</div><h3>لا توجد غرف بعد</h3><p>أنشئ أول غرفة أو انضم بكود</p></div>';return;}
+  el.innerHTML='';
+  for(const r of rooms){
+    const card=document.createElement('div');card.className='room-card';
+    // Get some members avatars
+    const memSn=await DB.ref('rooms/'+r.id+'/members').limitToFirst(5).once('value');
+    const memUids=[];memSn.forEach(c=>memUids.push(c.key));
+    const memAvatars=await Promise.all(memUids.map(async uid=>{
+      const u=await getUser(uid);
+      return `<div class="rm-av" style="${avStyle(u)}">${u.photoURL?'':san((u.name||'?')[0])}</div>`;
+    }));
+    const isMyRoom=r.hostUid===ME.uid;
+    const isMember=(await DB.ref('rooms/'+r.id+'/members/'+ME.uid).once('value')).val();
+    card.innerHTML=`
+      <div class="room-card-top">
+        <div class="room-emoji" style="background:${san(r.color||'rgba(224,64,251,.12)')}">
+          ${san(r.emoji||'💬')}
+        </div>
+        <div class="room-info">
+          <div class="room-name">${san(r.name||'')}<span class="room-live-dot"></span></div>
+          ${r.desc?`<div class="room-desc">${san(r.desc)}</div>`:''}
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            ${r.isPrivate?'<span class="room-tag">🔒 خاصة</span>':'<span class="room-tag">🌍 عامة</span>'}
+            ${isMyRoom?'<span class="room-tag" style="background:rgba(224,64,251,.15);color:var(--acc)">👑 غرفتي</span>':''}
+            ${isMember&&!isMyRoom?'<span class="room-tag" style="background:rgba(76,175,80,.1);color:var(--green)">✓ عضو</span>':''}
+          </div>
+        </div>
+      </div>
+      <div class="room-members-strip">
+        <div style="display:flex">${memAvatars.join('')}</div>
+        <span class="room-count">${r.membersCount||0} عضو</span>
+        ${r.isPrivate?`<span style="font-size:11px;color:var(--t3)">🔑 ${san(isMyRoom||isMember?r.code:'****')}</span>`:''}
+      </div>`;
+    card.onclick=()=>joinRoom(r);
+    el.appendChild(card);
+  }
+}
+
+async function joinRoom(room){
+  if(!room.active)return toast('الغرفة مغلقة');
+  if(room.isPrivate){
+    const isMember=(await DB.ref('rooms/'+room.id+'/members/'+ME.uid).once('value')).val();
+    if(!isMember&&room.hostUid!==ME.uid){
+      // Ask for code
+      const code=prompt('أدخل كود الغرفة (4 أرقام):');
+      if(!code)return;
+      if(code!==room.code)return toast('❌ كود خاطئ');
+    }
+  }
+  await DB.ref('rooms/'+room.id+'/members/'+ME.uid).set({uid:ME.uid,joinedAt:firebase.database.ServerValue.TIMESTAMP});
+  DB.ref('rooms/'+room.id+'/membersCount').transaction(n=>Math.max(1,n||1));
+  openRoomView(room);
+}
+
+function openRoomView(room){
+  ROOM_ID=room.id;ROOM_DATA=room;
+  document.getElementById('rv-name').textContent=(room.emoji||'💬')+' '+san(room.name||'');
+  document.getElementById('rv-code').textContent='🔑 '+san(room.code||'');
+  document.getElementById('rv-meta').textContent=san(room.desc||'');
+  document.getElementById('room-msgs').innerHTML='';
+  document.getElementById('room-typing').textContent='';
+  document.getElementById('members-panel').classList.remove('open');
+  membersPanelOpen=false;
+  document.getElementById('room-view').classList.add('open');
+  // Send join system message
+  pushRoomSysMsg(ME.name+' انضم للغرفة 👋');
+  listenRoomMsgs(room.id);
+  listenRoomMembers(room.id);
+  listenRoomTyping(room.id);
+  // Set online in room
+  DB.ref('rooms/'+room.id+'/online/'+ME.uid).set(true);
+  DB.ref('rooms/'+room.id+'/online/'+ME.uid).onDisconnect().remove();
+}
+
+async function closeRoom(){
+  if(!ROOM_ID)return;
+  // Remove from online
+  DB.ref('rooms/'+ROOM_ID+'/online/'+ME.uid).remove();
+  pushRoomSysMsg(ME.name+' غادر الغرفة');
+  rmL('roommsgs');rmL('roommembers');rmL('roomtyping');
+  document.getElementById('room-view').classList.remove('open');
+  ROOM_ID=null;ROOM_DATA=null;
+}
+
+async function pushRoomSysMsg(text){
+  if(!ROOM_ID)return;
+  const mid=DB.ref('room-messages/'+ROOM_ID).push().key;
+  await DB.ref('room-messages/'+ROOM_ID+'/'+mid).set({type:'system',text,time:firebase.database.ServerValue.TIMESTAMP});
+}
+
+async function sendRoomMsg(){
+  const ta=document.getElementById('room-ta'),txt=ta.value.trim();
+  if(!txt||!ROOM_ID)return;
+  ta.value='';ta.style.height='auto';
+  DB.ref('rooms/'+ROOM_ID+'/typing/'+ME.uid).remove();
+  const mid=DB.ref('room-messages/'+ROOM_ID).push().key;
+  await DB.ref('room-messages/'+ROOM_ID+'/'+mid).set({
+    type:'text',text:txt,from:ME.uid,
+    fromName:ME.name||'',fromColor:ME.color||gc(ME.uid),
+    fromPhoto:ME.photoURL||'',
+    time:firebase.database.ServerValue.TIMESTAMP
+  });
+}
+
+function onRoomKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendRoomMsg();}}
+
+function onRoomTyping(){
+  if(!ROOM_ID)return;
+  DB.ref('rooms/'+ROOM_ID+'/typing/'+ME.uid).set(ME.name||'شخص');
+  clearTimeout(typingTmr);
+  typingTmr=setTimeout(()=>DB.ref('rooms/'+ROOM_ID+'/typing/'+ME.uid).remove(),2000);
+}
+
+function listenRoomMsgs(rid){
+  rmL('roommsgs');
+  const mw=document.getElementById('room-msgs');
+  mw.innerHTML='';
+  const ref=DB.ref('room-messages/'+rid).orderByChild('time').limitToLast(100);
+  LIS['roommsgs']=ref;
+  const rendered=new Set();
+  ref.on('child_added',sn=>{
+    const m={id:sn.key,...sn.val()};
+    if(rendered.has(m.id))return;rendered.add(m.id);
+    if(m.type==='system'){
+      const div=document.createElement('div');div.className='room-sys-msg';div.textContent=m.text||'';
+      mw.appendChild(div);
+    }else{
+      const isMe=m.from===ME.uid;
+      const row=document.createElement('div');
+      row.className=`mrow ${isMe?'out':'inc'}`;
+      const avBg=m.fromPhoto?`background-image:url(${san(m.fromPhoto)});background-size:cover;background-position:center`:`background:${san(m.fromColor||gc(m.from||''))}`;
+      const avHtml=!isMe?`<div style="width:28px;height:28px;border-radius:50%;flex-shrink:0;${avBg};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;align-self:flex-end;margin-bottom:18px">${m.fromPhoto?'':san((m.fromName||'?')[0])}</div>`:'';
+      row.innerHTML=`${avHtml}<div><div class="bbl">${!isMe?`<div style="font-size:10px;font-weight:700;color:${san(m.fromColor||'#aaa')};margin-bottom:3px">${san(m.fromName||'')}</div>`:''}${san(m.text||'').replace(/
+/g,'<br>')}<div class="bbl-meta">${fmtT(m.time)}</div></div></div>`;
+      mw.appendChild(row);
+    }
+    mw.scrollTop=mw.scrollHeight;
+  });
+}
+
+function listenRoomMembers(rid){
+  rmL('roommembers');
+  const ref=DB.ref('rooms/'+rid+'/online');LIS['roommembers']=ref;
+  ref.on('value',async sn=>{
+    const uids=[];sn.forEach(c=>uids.push(c.key));
+    document.getElementById('rv-meta').textContent=(ROOM_DATA?.desc||'')+' · '+uids.length+' متصل الآن';
+    const ml=document.getElementById('members-list');ml.innerHTML='';
+    for(const uid of uids){
+      const u=await getUser(uid);
+      const isHost=uid===ROOM_DATA?.hostUid;
+      const row=document.createElement('div');row.className='rmp-row';
+      row.innerHTML=`
+        <div class="rmp-av" style="${avStyle(u)}">
+          ${u.photoURL?'':san((u.name||'?')[0])}
+          <div class="rmp-online"></div>
+        </div>
+        <div class="rmp-name">${san(u.name||'')}</div>
+        ${isHost?'<span class="rmp-host">👑</span>':''}`;
+      ml.appendChild(row);
+    }
+  });
+}
+
+function listenRoomTyping(rid){
+  rmL('roomtyping');
+  const ref=DB.ref('rooms/'+rid+'/typing');LIS['roomtyping']=ref;
+  ref.on('value',sn=>{
+    const names=[];
+    sn.forEach(c=>{if(c.key!==ME.uid)names.push(c.val());});
+    const el=document.getElementById('room-typing');
+    if(names.length)el.textContent=names.join(', ')+(names.length===1?' يكتب...')+' يكتبون...';
+    else el.textContent='';
+  });
+}
+
+function toggleMembersPanel(){
+  membersPanelOpen=!membersPanelOpen;
+  document.getElementById('members-panel').classList.toggle('open',membersPanelOpen);
+}
+
+function copyRoomCode(){
+  if(!ROOM_DATA)return;
+  navigator.clipboard?.writeText(ROOM_DATA.code).then(()=>toast('📋 تم نسخ الكود: '+ROOM_DATA.code)).catch(()=>toast('الكود: '+ROOM_DATA.code));
+}
+
+function openMyRooms(){loadRooms();}
+
+
 </script>
 </body>
 </html>
