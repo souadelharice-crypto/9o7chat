@@ -357,6 +357,78 @@ html,body{height:100%;font-family:'Tajawal',sans-serif;background:#000;color:#ff
 .vw-bar{flex:1;min-width:2px;border-radius:1px;background:rgba(255,255,255,.5);transition:height .1s}
 .voice-dur{font-size:11px;opacity:.7;flex-shrink:0;font-weight:600}
 
+
+/* ── DM HORIZONTAL SCROLL (Instagram style) ── */
+#page-msgs .page-inner{padding-bottom:0}
+.dm-list-wrap{display:flex;flex-direction:column;height:100%}
+
+/* Active chats horizontal strip */
+.dm-active-strip{display:flex;gap:14px;padding:14px 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border2);flex-shrink:0}
+.dm-strip-item{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;flex-shrink:0}
+.dm-strip-av{width:56px;height:56px;border-radius:50%;padding:2px;background:linear-gradient(135deg,var(--acc),#ff6ec7);flex-shrink:0}
+.dm-strip-av.no-unread{background:var(--s3)}
+.dm-strip-av-in{width:100%;height:100%;border-radius:50%;background:var(--s2);border:2px solid #000;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;position:relative}
+.dm-strip-online{position:absolute;bottom:1px;right:1px;width:11px;height:11px;background:var(--green);border-radius:50%;border:2px solid #000}
+.dm-strip-name{font-size:11px;color:var(--t2);max-width:58px;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+
+/* Message list vertical below strip */
+.dm-msgs-list{flex:1;overflow-y:auto}
+
+/* ── REACTIONS ── */
+.msg-reactions{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+.reaction-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);font-size:13px;cursor:pointer;transition:all .15s;user-select:none}
+.reaction-chip:active{transform:scale(.92)}
+.reaction-chip.mine{background:rgba(224,64,251,.2);border-color:rgba(224,64,251,.4)}
+.reaction-chip span{font-size:11px;color:var(--t2)}
+.react-picker{position:fixed;z-index:999;background:var(--s2);border:1px solid var(--border);border-radius:30px;padding:6px 10px;display:flex;gap:6px;box-shadow:0 8px 32px rgba(0,0,0,.6);animation:popIn .15s ease both}
+@keyframes popIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+.react-opt{font-size:22px;cursor:pointer;padding:3px;border-radius:8px;transition:transform .12s}
+.react-opt:active{transform:scale(1.4)}
+
+/* ── ADMIN PROFILE ── */
+.admin-profile-wrap{position:relative;overflow:hidden}
+/* Animated gradient bg for admin */
+.admin-cover{height:180px;position:relative;overflow:hidden;background:#000}
+.admin-cover-anim{
+  position:absolute;inset:0;
+  background:linear-gradient(270deg,#e040fb,#7c4dff,#2979ff,#00bcd4,#e040fb);
+  background-size:400% 400%;
+  animation:gradShift 4s ease infinite;
+  opacity:.8;
+}
+@keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.admin-cover-stars{position:absolute;inset:0;background-image:radial-gradient(2px 2px at 20% 30%,#fff 0%,transparent 100%),radial-gradient(2px 2px at 80% 10%,#fff 0%,transparent 100%),radial-gradient(1px 1px at 50% 60%,#fff 0%,transparent 100%),radial-gradient(1px 1px at 30% 80%,rgba(255,255,255,.6) 0%,transparent 100%),radial-gradient(2px 2px at 70% 70%,rgba(255,255,255,.5) 0%,transparent 100%);animation:twinkle 3s ease-in-out infinite alternate}
+@keyframes twinkle{from{opacity:.6}to{opacity:1}}
+.admin-cover-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;letter-spacing:4px;color:rgba(255,255,255,.3);text-transform:uppercase}
+/* Admin avatar ring */
+.admin-av-ring{
+  position:absolute;inset:-5px;border-radius:50%;
+  background:conic-gradient(from 0deg,#e040fb,#7c4dff,#2979ff,#00bcd4,#ff6ec7,#e040fb);
+  animation:spin 3s linear infinite;z-index:-1;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Admin badge */
+.admin-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 10px;border-radius:20px;
+  background:linear-gradient(135deg,#e040fb,#7c4dff);
+  font-size:12px;font-weight:700;color:#fff;
+  box-shadow:0 2px 10px rgba(224,64,251,.4);
+  letter-spacing:.5px;
+}
+/* Admin name shimmer */
+.admin-name-shine{
+  background:linear-gradient(90deg,#fff 0%,#e040fb 40%,#7c4dff 60%,#fff 100%);
+  background-size:200% auto;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:shine 2.5s linear infinite;
+}
+@keyframes shine{from{background-position:200% center}to{background-position:-200% center}}
+/* Admin verified tick in badge */
+.vtick{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#e040fb,#7c4dff);font-size:10px;flex-shrink:0}
+/* profile name admin tick inline */
+.admin-tick{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#e040fb,#7c4dff);font-size:11px;margin-right:4px;box-shadow:0 2px 8px rgba(224,64,251,.5);flex-shrink:0}
+
 </style>
 </head>
 <body>
@@ -461,12 +533,13 @@ html,body{height:100%;font-family:'Tajawal',sans-serif;background:#000;color:#ff
   </div>
 
   <!-- ══ PAGE: DMs ══ -->
-  <div class="page" id="page-msgs">
-    <div class="topbar">
+  <div class="page" id="page-msgs" style="display:flex;flex-direction:column">
+    <div class="topbar" style="flex-shrink:0">
       <div class="topbar-title">الرسائل</div>
       <button class="ico-btn" onclick="openNC()">✏</button>
     </div>
-    <div id="dm-list"><div class="empty-state"><div class="es-ico">💬</div><h3>لا توجد رسائل</h3><p>ابحث عن أصدقاء لبدء محادثة</p></div></div>
+    <div class="dm-active-strip" id="dm-strip"></div>
+    <div id="dm-list" style="flex:1;overflow-y:auto"><div class="empty-state"><div class="es-ico">💬</div><h3>لا توجد رسائل</h3><p>ابحث عن أصدقاء لبدء محادثة</p></div></div>
   </div>
 
   <!-- ══ BOTTOM NAV ══ -->
@@ -1146,14 +1219,22 @@ async function openUserProfile(uid){
   const isFollowing=isFollSn.val();
   const avBg=u.photoURL?`background-image:url(${san(u.photoURL)});background-color:${san(u.color||gc(uid))};background-size:cover;background-position:center`:`background:${san(u.color||gc(uid))}`;
   const gridHtml=posts.map(p=>`<div class="grid-post" style="${p.img?`background-image:url(${san(p.img)})`:'background:var(--s3)'}" onclick="closeModal('user-modal');openPost('${san(p.id)}')">${p.img?`<img src="${san(p.img)}" style="width:100%;height:100%;object-fit:cover" loading="lazy">`:`<span style="font-size:12px;padding:8px;text-align:center;color:var(--t2)">${san((p.caption||'').substring(0,50))}</span>`}</div>`).join('');
+  const adminUser = isAdmin(u);
+  const coverHtml = adminUser ? mkAdminCover() : '<div class="profile-cover"><div class="profile-cover-grad"></div></div>';
+  const avHtml = adminUser
+    ? mkAdminAvatar(u, 78)
+    : `<div class="profile-av-big" style="${avBg}">${u.photoURL?'':san((u.name||'?')[0])}</div>`;
+  const nameHtml = adminUser ? mkAdminName(u) : san(u.name||'');
+  const badgesHtml = adminUser ? mkAdminBadges() : '';
   document.getElementById('user-modal-content').innerHTML=`
-    <div class="profile-cover"><div class="profile-cover-grad"></div></div>
+    ${coverHtml}
     <div class="profile-av-wrap">
-      <div class="profile-av-big" style="${avBg}">${u.photoURL?'':san((u.name||'?')[0])}</div>
+      ${avHtml}
       <button class="profile-msg-btn" style="width:auto;padding:8px 18px;margin:0" onclick="closeModal('user-modal');openChatWith('${san(uid)}')">💬 رسالة</button>
     </div>
     <div class="profile-info">
-      <div class="profile-name">${san(u.name||'')}</div>
+      <div class="profile-name" style="display:flex;align-items:center;gap:4px">${nameHtml}</div>
+      ${badgesHtml}
       <div class="profile-handle">${san(u.handle||'')}</div>
       ${u.bio?`<div class="profile-bio">${san(u.bio)}</div>`:''}
       <div class="profile-stats">
@@ -1181,14 +1262,22 @@ async function renderMyProfile(){
   const u=uSn.val()||ME;ME={...ME,...u};
   const avBg=ME.photoURL?`background-image:url(${san(ME.photoURL)});background-color:${san(ME.color||gc(ME.uid))};background-size:cover;background-position:center`:`background:${san(ME.color||gc(ME.uid))}`;
   const gridHtml=posts.map(p=>`<div class="grid-post" onclick="openPost('${san(p.id)}')">${p.img?`<img src="${san(p.img)}" style="width:100%;height:100%;object-fit:cover" loading="lazy">`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:8px;font-size:12px;color:var(--t2);text-align:center">${san((p.caption||'').substring(0,60))}</div>`}</div>`).join('');
+  const meIsAdmin = isAdmin(ME);
+  const myCover = meIsAdmin ? mkAdminCover() : '<div class="profile-cover"><div class="profile-cover-grad"></div></div>';
+  const myAv = meIsAdmin
+    ? mkAdminAvatar(ME, 78)
+    : `<div class="profile-av-big" style="${avBg}" onclick="document.getElementById('av-upload').click()">${ME.photoURL?'':san((ME.name||'?')[0])}</div>`;
+  const myName = meIsAdmin ? mkAdminName(ME) : san(ME.name||'');
+  const myBadges = meIsAdmin ? mkAdminBadges() : '';
   document.getElementById('my-profile-content').innerHTML=`
-    <div class="profile-cover"><div class="profile-cover-grad"></div></div>
+    ${myCover}
     <div class="profile-av-wrap">
-      <div class="profile-av-big" style="${avBg}" onclick="document.getElementById('av-upload').click()">${ME.photoURL?'':san((ME.name||'?')[0])}</div>
+      ${myAv}
       <button class="profile-edit-btn" onclick="openEditProfile()">تعديل الملف</button>
     </div>
     <div class="profile-info">
-      <div class="profile-name">${san(ME.name||'')}</div>
+      <div class="profile-name" style="display:flex;align-items:center;gap:4px">${myName}</div>
+      ${myBadges}
       <div class="profile-handle">${san(ME.handle||'')}</div>
       ${ME.bio?`<div class="profile-bio">${san(ME.bio)}</div>`:''}
       <div class="profile-stats">
@@ -1247,6 +1336,7 @@ function listenDMs(){
   ref.on('value',async sn=>{
     const chats=[];sn.forEach(c=>chats.push({id:c.key,...c.val()}));
     chats.sort((a,b)=>(b.lastMsg?.time||0)-(a.lastMsg?.time||0));
+    renderDmStrip(chats);
     const dl=document.getElementById('dm-list');
     if(!chats.length){dl.innerHTML='<div class="empty-state"><div class="es-ico">💬</div><h3>لا توجد رسائل</h3><p>ابحث عن أصدقاء لبدء محادثة</p></div>';return;}
     dl.innerHTML='';
@@ -1339,9 +1429,30 @@ function mkMsgRow(m,lastFrom){
   }else{
     bblContent=san(m.text||'').replace(/\n/g,'<br>');
   }
-  row.innerHTML=`${av}<div><div class="msg-bbl">${bblContent}<div class="msg-meta">${san(fmtT(m.time))}${isMe?`<span style="font-size:11px">${m.read?'✓✓':'✓'}</span>`:''}</div></div></div>`;
-  return {row,isMe};
+  const reactionId = 'rxn_'+san(m.id);
+  row.innerHTML=`${av}<div>
+    <div class="msg-bbl" 
+      ondblclick="event.stopPropagation();showReactPicker('${san(m.id)}','__CID__',event.clientX,event.clientY)"
+      ontouchstart="handleTouchStart(event,'${san(m.id)}','__CID__')"
+      ontouchend="handleTouchEnd()"
+    >${bblContent}<div class="msg-meta">${san(fmtT(m.time))}${isMe?`<span style="font-size:11px">${m.read?'✓✓':'✓'}</span>`:''}</div></div>
+    <div class="msg-reactions" id="${reactionId}"></div>
+  </div>`;
+  // Render initial reactions
+  if(m.reactions) renderReactions(m.reactions, m.id, '__CID__', row.querySelector('#'+reactionId));
+  return {row, isMe, reactionId, msgId: m.id};
 }
+
+// Touch long-press for reactions
+let touchTmr=null;
+function handleTouchStart(e, msgId, chatId){
+  touchTmr=setTimeout(()=>{
+    const t=e.touches[0];
+    showReactPicker(msgId,chatId,t.clientX,t.clientY);
+  },500);
+}
+function handleTouchEnd(){clearTimeout(touchTmr);}
+
 
 async function listenChatMsgs(cid){
   rmL('chatmsgs');rmL('chatchanged');
@@ -1361,6 +1472,7 @@ async function listenChatMsgs(cid){
   for(const m of existing){
     const {row,isMe}=mkMsgRow(m,lastFrom);
     lastFrom=m.from;
+    fixCid(row);
     mw.appendChild(row);
     renderedIds.add(m.id);
     if(!isMe&&!m.read){
@@ -1369,6 +1481,9 @@ async function listenChatMsgs(cid){
   }
   mw.scrollTop=mw.scrollHeight;
   DB.ref('chats/'+cid+'/unread/'+ME.uid).set(0).catch(()=>{});
+
+  // Replace CID placeholder with actual chat id
+  function fixCid(row){ row.innerHTML=row.innerHTML.replace(/__CID__/g, san(cid)); }
 
   // ── Step 2: listen for NEW messages only ──
   const since=existing.length?existing[existing.length-1].time:Date.now();
@@ -1379,8 +1494,9 @@ async function listenChatMsgs(cid){
     if(renderedIds.has(m.id))return; // skip already rendered
     renderedIds.add(m.id);
     if(m.from!==ME.uid)await getUser(m.from);
-    const{row,isMe}=mkMsgRow(m,lastFrom);
+    const{row,isMe,reactionId,msgId}=mkMsgRow(m,lastFrom);
     lastFrom=m.from;
+    fixCid(row);
     mw.appendChild(row);
     mw.scrollTop=mw.scrollHeight;
     if(!isMe&&!m.read){
@@ -1389,7 +1505,14 @@ async function listenChatMsgs(cid){
     }
   });
 
-  // ── Step 3: read receipts ──
+  // ── Step 3: reactions live listener ──
+  DB.ref('messages/'+cid).on('child_changed', sn=>{
+    const m={id:sn.key,...sn.val()};
+    const rxEl=document.getElementById('rxn_'+m.id);
+    if(rxEl) renderReactions(m.reactions||{}, m.id, cid, rxEl);
+  });
+
+  // ── Step 3b: read receipts ──
   const ref2=DB.ref('messages/'+cid).orderByChild('from').equalTo(ME.uid);
   LISTENERS['chatchanged']=ref2;
   ref2.on('child_changed',sn=>{
@@ -1526,6 +1649,77 @@ document.addEventListener('keydown',e=>{
   }
 });
 
+
+// ═══════════════════════════════════════════════════
+//  ADMIN CHECK
+// ═══════════════════════════════════════════════════
+const ADMIN_HANDLE='9o7';
+const isAdmin=u=>(u&&(u.handle||'').toLowerCase()===ADMIN_HANDLE);
+
+// ═══════════════════════════════════════════════════
+//  REACTIONS
+// ═══════════════════════════════════════════════════
+let reactTarget=null;
+function showReactPicker(msgId,chatId,x,y){
+  reactTarget={msgId,chatId};
+  const p=document.getElementById('react-picker');
+  p.style.display='flex';
+  let left=x-110;if(left<8)left=8;if(left+220>window.innerWidth-8)left=window.innerWidth-228;
+  let top=y-60;if(top<60)top=y+12;
+  p.style.left=left+'px';p.style.top=top+'px';
+}
+function hideReactPicker(){document.getElementById('react-picker').style.display='none';reactTarget=null;}
+async function doReact(emoji){
+  if(!reactTarget)return;
+  const{msgId,chatId}=reactTarget;
+  hideReactPicker();
+  const ref=DB.ref('messages/'+chatId+'/'+msgId+'/reactions/'+ME.uid);
+  const sn=await ref.once('value');
+  if(sn.val()===emoji)await ref.remove();else await ref.set(emoji);
+}
+function renderReactions(reactions,msgId,chatId,container){
+  if(!container)return;
+  if(!reactions||!Object.keys(reactions).length){container.innerHTML='';return;}
+  const groups={};
+  Object.entries(reactions).forEach(([uid,emoji])=>{if(!groups[emoji])groups[emoji]=[];groups[emoji].push(uid);});
+  container.innerHTML=Object.entries(groups).map(([emoji,uids])=>{
+    const mine=uids.includes(ME.uid);
+    return `<div class="reaction-chip${mine?' mine':''}" onclick="reactTarget={msgId:'${san(msgId)}',chatId:'${san(chatId)}'};doReact('${emoji}')">${emoji}<span>${uids.length}</span></div>`;
+  }).join('');
+}
+document.addEventListener('click',e=>{const p=document.getElementById('react-picker');if(p&&p.style.display!=='none'&&!p.contains(e.target))hideReactPicker();});
+
+// ═══════════════════════════════════════════════════
+//  DM STRIP
+// ═══════════════════════════════════════════════════
+async function renderDmStrip(chats){
+  const strip=document.getElementById('dm-strip');if(!strip)return;
+  strip.innerHTML='';
+  for(const ch of chats.slice(0,15)){
+    const oid=Object.keys(ch.members||{}).find(u=>u!==ME.uid);if(!oid)continue;
+    const u=await getUser(oid);if(!u||!u.name)continue;
+    const unread=ch.unread?.[ME.uid]||0;
+    const avBg=u.photoURL?`background-image:url(${san(u.photoURL)});background-color:${san(u.color||gc(oid))};background-size:cover;background-position:center`:`background:${san(u.color||gc(oid))}`;
+    const item=document.createElement('div');item.className='dm-strip-item';
+    item.onclick=()=>openChatWith(oid);
+    item.innerHTML=`<div class="dm-strip-av${unread>0?'':' no-unread'}"><div class="dm-strip-av-in" style="${avBg}">${u.photoURL?'':san((u.name||'?')[0])}${u.online?'<div class="dm-strip-online"></div>':''}</div></div><span class="dm-strip-name">${san(u.name||'')}</span>`;
+    strip.appendChild(item);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  ADMIN PROFILE BUILDERS
+// ═══════════════════════════════════════════════════
+function mkAdminCover(){return`<div class="admin-cover"><div class="admin-cover-anim"></div><div class="admin-cover-stars"></div><div class="admin-cover-text">9o7chat · founder</div></div>`;}
+function mkAdminAvatar(u,size=78){const avBg=u.photoURL?`background-image:url(${san(u.photoURL)});background-color:${san(u.color||gc(u.uid))};background-size:cover;background-position:center`:`background:${san(u.color||gc(u.uid))}`;return`<div style="position:relative;width:${size}px;height:${size}px;display:inline-block"><div class="admin-av-ring"></div><div style="width:${size}px;height:${size}px;border-radius:50%;${avBg};border:3px solid #000;display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*.35)}px;font-weight:900;color:#fff;position:relative;z-index:1">${u.photoURL?'':san((u.name||'?')[0])}</div></div>`;}
+function mkAdminName(u){return`<span class="admin-name-shine">${san(u.name||'')}</span><span class="admin-tick">👑</span>`;}
+function mkAdminBadges(){return`<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px"><span class="admin-badge">👑 Founder</span><span class="admin-badge" style="background:linear-gradient(135deg,#2979ff,#00bcd4)">✦ Admin</span><span class="admin-badge" style="background:linear-gradient(135deg,#ff6ec7,#e040fb)">⚡ 9o7chat</span></div>`;}
+
+// Touch long press
+let touchTmr2=null;
+function handleTouchStart(e,msgId,chatId){touchTmr2=setTimeout(()=>{const t=e.touches[0];showReactPicker(msgId,chatId,t.clientX,t.clientY);},500);}
+function handleTouchEnd(){clearTimeout(touchTmr2);}
+
 // ═══════════════════════════════════════════════════
 //  VOICE RECORDING
 // ═══════════════════════════════════════════════════
@@ -1620,5 +1814,15 @@ function animVoice(id,playing){
 
 
 </script>
+
+<div class="react-picker" id="react-picker" style="display:none">
+  <span class="react-opt" onclick="doReact('❤️')">❤️</span>
+  <span class="react-opt" onclick="doReact('😂')">😂</span>
+  <span class="react-opt" onclick="doReact('😮')">😮</span>
+  <span class="react-opt" onclick="doReact('😢')">😢</span>
+  <span class="react-opt" onclick="doReact('🔥')">🔥</span>
+  <span class="react-opt" onclick="doReact('👍')">👍</span>
+</div>
+
 </body>
 </html>
