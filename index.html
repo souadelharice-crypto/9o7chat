@@ -25,6 +25,8 @@ html,body{height:100%;font-family:'Tajawal',sans-serif;background:#000;color:#ff
 .lo-logo{font-size:34px;font-weight:900;letter-spacing:-1px}
 .lo-logo span{color:var(--acc)}
 .lo-ring{width:36px;height:36px;border:3px solid #222;border-top-color:var(--acc);border-radius:50%;animation:spin .8s linear infinite}
+#loader-hint{font-size:12px;color:#333;margin-top:8px;transition:opacity .5s;opacity:0}
+#loader-hint.show{opacity:1}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* AUTH */
@@ -396,7 +398,23 @@ html,body{height:100%;font-family:'Tajawal',sans-serif;background:#000;color:#ff
 </head>
 <body>
 
-<div id="loader"><div class="lo-logo"><span>9o7</span>chat</div><div class="lo-ring"></div></div>
+<div id="loader">
+  <div class="lo-logo"><span>9o7</span>chat</div>
+  <div class="lo-ring"></div>
+  <div id="loader-hint">جارٍ الاتصال...</div>
+</div>
+<script>
+// Show hint after 2s, if still loading after 6s show reload button
+setTimeout(()=>{const h=document.getElementById('loader-hint');if(h){h.classList.add('show');}},2000);
+setTimeout(()=>{
+  const h=document.getElementById('loader-hint');
+  if(h&&document.getElementById('loader').style.display!=='none'){
+    h.textContent='يبدو أن هناك مشكلة في الاتصال';
+    h.style.color='#666';
+    h.innerHTML='مشكلة في الاتصال — <span onclick="location.reload()" style="color:var(--acc);cursor:pointer;text-decoration:underline">أعد المحاولة</span>';
+  }
+},7000);
+</script>
 
 <!-- AUTH -->
 <div id="auth">
@@ -798,23 +816,41 @@ async function doLogout(){
 // ══════════════════════════════════════
 //  AFTER LOGIN
 // ══════════════════════════════════════
-AU.onAuthStateChanged(async fbU=>{
+// Timeout fallback — if Firebase takes too long, show auth
+const loaderTimeout = setTimeout(()=>{
   document.getElementById('loader').style.display='none';
-  if(!fbU){document.getElementById('auth').style.display='flex';return;}
-  const sn=await DB.ref('users/'+fbU.uid).once('value');
-  ME=sn.val();
-  if(!ME){
-    ME={uid:fbU.uid,name:fbU.displayName||'مستخدم',handle:'u_'+fbU.uid.substring(0,8),color:gc(fbU.uid),bio:'',postsCount:0,followersCount:0,followingCount:0};
-    await DB.ref('users/'+fbU.uid).set({...ME,createdAt:firebase.database.ServerValue.TIMESTAMP});
+  document.getElementById('auth').style.display='flex';
+}, 6000);
+
+AU.onAuthStateChanged(async fbU=>{
+  clearTimeout(loaderTimeout);
+  document.getElementById('loader').style.display='none';
+  if(!fbU){
+    document.getElementById('auth').style.display='flex';
+    return;
   }
-  uCache[ME.uid]=ME;
-  DB.ref('users/'+ME.uid+'/online').set(true);
-  DB.ref('users/'+ME.uid+'/online').onDisconnect().set(false);
-  DB.ref('.info/connected').on('value',s=>{if(s.val())DB.ref('users/'+ME.uid+'/online').set(true);});
-  document.getElementById('auth').style.display='none';
-  document.getElementById('app').style.display='block';
-  document.getElementById('my-topbar-handle').textContent='@'+(ME.handle||'');
-  initApp();
+  try{
+    // Add connection timeout for DB read
+    const dbTimeout = new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000));
+    const dbFetch = DB.ref('users/'+fbU.uid).once('value');
+    const sn = await Promise.race([dbFetch, dbTimeout]).catch(()=>({val:()=>null}));
+    ME = sn.val ? sn.val() : null;
+    if(!ME){
+      ME={uid:fbU.uid,name:fbU.displayName||'مستخدم',handle:'u_'+fbU.uid.substring(0,8),color:gc(fbU.uid),bio:'',postsCount:0,followersCount:0,followingCount:0};
+      DB.ref('users/'+fbU.uid).set({...ME,createdAt:firebase.database.ServerValue.TIMESTAMP}).catch(()=>{});
+    }
+    uCache[ME.uid]=ME;
+    DB.ref('users/'+ME.uid+'/online').set(true).catch(()=>{});
+    DB.ref('users/'+ME.uid+'/online').onDisconnect().set(false);
+    DB.ref('.info/connected').on('value',s=>{if(s.val())DB.ref('users/'+ME.uid+'/online').set(true);});
+    document.getElementById('auth').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('my-topbar-handle').textContent='@'+(ME.handle||'');
+    initApp();
+  }catch(e){
+    console.error('[9o7] auth error:',e);
+    document.getElementById('auth').style.display='flex';
+  }
 });
 
 // ══════════════════════════════════════
