@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>9O7CHAT - Ultimate Admin Edition</title>
+    <title>9O7CHAT - Private & Encrypted</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
@@ -13,63 +13,88 @@
     <style>
         :root { --primary: #00ff88; --admin: #ff3e3e; --vip: #ffd700; --bg: #0a0e27; }
         body { font-family: 'JetBrains Mono', monospace; background: var(--bg); color: #e0e6ff; height: 100vh; overflow: hidden; display: flex; }
-        .sidebar { width: 280px; border-right: 1px solid rgba(0, 255, 136, 0.1); background: rgba(26, 31, 58, 0.95); display: flex; flex-direction: column; }
-        .room-item { padding: 12px; margin: 5px 10px; background: rgba(0, 255, 136, 0.05); border-radius: 8px; cursor: pointer; transition: 0.3s; }
-        .room-item.active { background: rgba(0, 255, 136, 0.2); border: 1px solid var(--primary); color: var(--primary); }
-        .messages-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { max-width: 80%; padding: 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); }
-        .msg.own { align-self: flex-end; background: rgba(0, 255, 136, 0.1); border-left: 3px solid var(--primary); }
-        .admin-msg { border-left: 3px solid var(--admin) !important; background: rgba(255, 62, 62, 0.1) !important; }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .sidebar { width: 300px; border-right: 1px solid rgba(0, 255, 136, 0.1); background: rgba(13, 17, 38, 0.98); display: flex; flex-direction: column; }
+        .room-item { padding: 12px; margin: 5px 10px; background: rgba(0, 255, 136, 0.03); border-radius: 8px; cursor: pointer; transition: 0.3s; border: 1px solid transparent; }
+        .room-item:hover { background: rgba(0, 255, 136, 0.1); }
+        .room-item.active { background: rgba(0, 255, 136, 0.15); border-color: var(--primary); color: var(--primary); }
+        .messages-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+        .msg { max-width: 80%; padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.05); }
+        .msg.own { align-self: flex-end; background: rgba(0, 255, 136, 0.08); border-left: 3px solid var(--primary); }
+        .admin-msg { border-left: 3px solid var(--admin) !important; background: rgba(255, 62, 62, 0.08) !important; }
+        .vip-msg { border-left: 3px solid var(--vip) !important; background: rgba(255, 215, 0, 0.05) !important; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
         .modal.active { display: flex; }
+        .badge { font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; margin-right: 5px; }
     </style>
 </head>
 <body>
 
-    <div id="welcomeModal" class="modal active">
-        <div class="bg-[#1a1f3a] p-8 rounded-xl border border-green-500 max-w-md w-full">
-            <h2 class="text-2xl font-bold text-green-400 mb-4 text-center">9O7CHAT RULES 💀</h2>
-            <ul class="text-sm space-y-3 text-gray-300 mb-6">
-                <li>1. No spamming or flooding the chat.</li>
-                <li>2. Respect the Admins at all times.</li>
-                <li>3. No illegal content or harmful links.</li>
-                <li>4. <span class="text-yellow-400">[VIP]</span> Rank: Access to large file uploads.</li>
-                <li>5. <span class="text-red-500">[ADMIN]</span> Rank: Full control & management.</li>
-            </ul>
-            <button onclick="closeModal()" class="w-full py-3 bg-green-500 text-black font-bold rounded-lg hover:bg-green-400">I ACCEPT THE RULES</button>
+    <div id="rulesModal" class="modal active">
+        <div class="bg-[#161b33] p-8 rounded-2xl border border-green-500/30 max-w-md w-full shadow-2xl">
+            <h2 class="text-3xl font-bold text-green-400 mb-6 text-center tracking-tighter">9O7CHAT RULES 💀</h2>
+            <div class="space-y-4 text-sm text-gray-400 mb-8">
+                <p>🚀 <span class="text-white font-bold">SPREAD THE WORD:</span> Share the link to earn rewards.</p>
+                <p>🔒 <span class="text-white font-bold">PRIVATE ROOMS:</span> Create your own secret space.</p>
+                <p>💎 <span class="text-white font-bold">RANKS:</span> Contact Admin for <span class="text-yellow-400">VIP Status</span>.</p>
+                <hr class="border-gray-800">
+                <p>❌ No Spamming. No illegal content.</p>
+            </div>
+            <button onclick="closeRules()" class="w-full py-4 bg-green-500 text-black font-bold rounded-xl hover:scale-105 transition shadow-lg shadow-green-500/20">ENTER THE VOID</button>
         </div>
     </div>
 
     <div class="sidebar">
-        <div class="p-6 border-b border-green-900/30 text-center">
-            <h1 class="text-2xl font-bold text-green-400 tracking-tighter">9O7CHAT</h1>
-            <div id="status" class="text-[10px] mt-2 font-bold uppercase tracking-widest text-gray-500">OFFLINE</div>
+        <div class="p-8 border-b border-white/5 text-center">
+            <h1 class="text-3xl font-black text-green-400 italic tracking-tighter">9O7CHAT</h1>
+            <div id="status" class="text-[9px] mt-2 font-bold tracking-[0.2em] text-gray-500">OFFLINE</div>
         </div>
-        <div class="flex-1 py-4 overflow-y-auto" id="roomsList">
+
+        <div class="p-4">
+            <button onclick="createPrivateRoom()" class="w-full p-2 bg-blue-600/20 text-blue-400 border border-blue-500/50 rounded-lg text-xs font-bold hover:bg-blue-600/40 transition">🔒 CREATE PRIVATE ROOM</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto space-y-1" id="roomsList">
             </div>
-        <div class="p-4 space-y-2">
-            <button onclick="activateAdmin()" class="w-full p-2 text-[10px] bg-red-900/20 text-red-400 border border-red-500 rounded font-bold hover:bg-red-900/40">ACTIVATE ADMIN ⚡</button>
-            <button id="authBtn" class="w-full p-3 bg-green-500 text-black font-bold rounded shadow-lg hover:scale-105 transition">JOIN SERVER</button>
+
+        <div class="p-4 space-y-3 bg-black/20">
+            <button onclick="shareLink()" class="w-full p-2 text-xs bg-purple-600/20 text-purple-400 border border-purple-500/50 rounded-lg font-bold">📢 SHARE & INVITE</button>
+            <a href="https://t.me/zv88v" target="_blank" class="block w-full p-2 text-xs bg-yellow-600/20 text-yellow-400 border border-yellow-500/50 rounded-lg font-bold text-center">💎 GET VIP / CONTACT</a>
+            <button onclick="activateAdmin()" class="w-full p-2 text-[9px] text-red-500/50 hover:text-red-500 transition">ACTIVATE ADMIN</button>
+            <button id="authBtn" class="w-full py-3 bg-green-500 text-black font-bold rounded-xl shadow-xl shadow-green-500/10">JOIN SERVER</button>
         </div>
     </div>
 
-    <div class="flex-1 flex flex-col">
-        <div class="p-4 border-b border-green-900/30 flex justify-between items-center bg-black/40">
-            <h3 id="roomTitle" class="font-bold text-green-400 italic">Select a Channel</h3>
-            <span class="text-[10px] text-gray-500">SESSION ID: <span id="userIdDisplay" class="text-green-500">---</span></span>
+    <div class="flex-1 flex flex-col relative">
+        <div class="p-5 border-b border-white/5 flex justify-between items-center bg-black/20 backdrop-blur-md">
+            <div>
+                <h3 id="roomTitle" class="font-bold text-green-400">Select Channel</h3>
+                <span id="typingStatus" class="text-[10px] text-green-500/50 italic h-4 block"></span>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Client ID</p>
+                <p id="userIdDisplay" class="text-xs font-bold text-green-500">---</p>
+            </div>
         </div>
+
         <div id="messagesContainer" class="messages-container"></div>
-        <div id="uploadProgress" class="h-1 bg-green-500 w-0"></div>
-        <div class="p-4 border-t border-green-900/30 bg-black/50 flex gap-3">
-            <label class="cursor-pointer bg-white/10 p-3 rounded-lg hover:bg-white/20">
-                📁 <input type="file" id="fileInput" class="hidden" onchange="uploadFile()">
-            </label>
-            <input id="msgInput" type="text" placeholder="Type a message..." class="flex-1 bg-white/5 border border-white/10 rounded-lg p-3 outline-none focus:border-green-400" disabled>
-            <button id="sendBtn" class="px-6 py-2 bg-green-500 text-black font-bold rounded-lg disabled:opacity-30" disabled>SEND</button>
+        <div id="uploadProgress" class="h-0.5 bg-green-500 w-0 transition-all"></div>
+
+        <div class="p-5 border-t border-white/5 bg-[#0d1126]">
+            <div class="flex gap-4 items-center">
+                <label class="cursor-pointer hover:scale-110 transition">
+                    <span class="text-xl">📎</span>
+                    <input type="file" id="fileInput" class="hidden" onchange="uploadFile()">
+                </label>
+                <input id="msgInput" type="text" placeholder="Type an encrypted message..." class="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 outline-none focus:border-green-500 focus:bg-white/[0.08]" disabled>
+                <button id="sendBtn" class="p-4 bg-green-500 text-black rounded-2xl font-bold shadow-lg shadow-green-500/20 disabled:opacity-30">
+                    <svg viewBox="0 0 24 24" class="w-6 h-6 fill-current"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
+        // --- YOUR FIREBASE CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyBj19ByaidBYTANgXtus-m8NBH1pyCps44",
             authDomain: "o7chat-56520.firebaseapp.com",
@@ -85,51 +110,83 @@
         const storage = firebase.storage();
         
         let currentUser, currentRoom, msgUnsub;
-        let adminMode = localStorage.getItem('9o7admin') === 'true';
+        let isAdminMode = localStorage.getItem('is9o7admin') === 'true';
 
+        // --- Auth Management ---
         auth.onAuthStateChanged(user => {
             currentUser = user;
-            const statusBox = document.getElementById('status');
+            const status = document.getElementById('status');
             if (user) {
-                statusBox.textContent = adminMode ? 'ADMIN ACTIVE 💀' : 'ONLINE';
-                statusBox.style.color = adminMode ? '#ff3e3e' : '#00ff88';
-                document.getElementById('userIdDisplay').textContent = user.uid.slice(0,6);
+                status.textContent = isAdminMode ? 'ADMIN ACTIVE 💀' : 'ONLINE';
+                status.style.color = isAdminMode ? '#ff3e3e' : '#00ff88';
+                document.getElementById('userIdDisplay').textContent = user.uid.slice(0,8);
                 listenToRooms();
             } else {
-                statusBox.textContent = 'OFFLINE';
-                statusBox.style.color = '#ff4444';
+                status.textContent = 'OFFLINE';
+                status.style.color = '#ff4444';
             }
         });
 
+        function closeRules() { document.getElementById('rulesModal').classList.remove('active'); }
+
+        // --- Admin Activation ---
         function activateAdmin() {
-            const key = prompt("Enter Admin Activation Key:");
-            if (key === "9o79o7admin") {
-                adminMode = true;
-                localStorage.setItem('9o7admin', 'true');
-                alert("Admin Access Granted. Welcome back Boss!");
+            const code = prompt("Enter Secret Admin Key:");
+            if (code === "9o79o7admin") {
+                isAdminMode = true;
+                localStorage.setItem('is9o7admin', 'true');
+                alert("Welcome Boss! Admin status verified.");
                 location.reload();
             } else {
-                alert("Invalid Key.");
+                alert("Access Denied.");
             }
         }
 
-        function closeModal() { document.getElementById('welcomeModal').classList.remove('active'); }
+        // --- Share Function ---
+        function shareLink() {
+            const url = window.location.href;
+            if (navigator.share) {
+                navigator.share({ title: '9O7CHAT', text: 'Join me on 9O7CHAT, the secure way to talk.', url: url });
+            } else {
+                prompt("Copy this link to invite friends:", url);
+            }
+        }
+
+        // --- Room Management ---
+        async function createPrivateRoom() {
+            if(!currentUser) return alert("Login first!");
+            const name = prompt("Enter Private Room Name:");
+            const pass = prompt("Set a password (PIN):");
+            if(name && pass) {
+                await db.collection('rooms').add({
+                    name: `🔒 ${name}`,
+                    password: pass,
+                    isPrivate: true,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+        }
 
         function listenToRooms() {
-            // Default Rooms
-            const defaultRooms = [
-                { id: 'general', name: 'General Chat 💬' },
-                { id: 'hacking', name: 'Hacking Zone 🛡️' },
-                { id: 'dev', name: 'Developer Hub 💻' }
-            ];
-            const list = document.getElementById('roomsList');
-            list.innerHTML = '';
-            defaultRooms.forEach(r => {
-                const el = document.createElement('div');
-                el.className = `room-item ${currentRoom === r.id ? 'active' : ''}`;
-                el.textContent = r.name;
-                el.onclick = () => selectRoom(r.id, r.name);
-                list.appendChild(el);
+            db.collection('rooms').orderBy('timestamp', 'desc').limit(10).onSnapshot(snap => {
+                const list = document.getElementById('roomsList');
+                list.innerHTML = `<div class="room-item active" onclick="selectRoom('global', 'Global Lobby 🌍')">Global Lobby 🌍</div>`;
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    const el = document.createElement('div');
+                    el.className = `room-item ${currentRoom === doc.id ? 'active' : ''}`;
+                    el.textContent = data.name;
+                    el.onclick = () => {
+                        if(data.isPrivate) {
+                            const p = prompt("This is a Private Room. Enter PIN:");
+                            if(p === data.password) selectRoom(doc.id, data.name);
+                            else alert("Incorrect PIN!");
+                        } else {
+                            selectRoom(doc.id, data.name);
+                        }
+                    };
+                    list.appendChild(el);
+                });
             });
         }
 
@@ -144,20 +201,24 @@
         function loadMessages() {
             if (msgUnsub) msgUnsub();
             msgUnsub = db.collection('rooms').doc(currentRoom).collection('messages')
-                .orderBy('timestamp', 'asc').onSnapshot(snap => {
+                .orderBy('timestamp', 'asc').limit(50).onSnapshot(snap => {
                     const cont = document.getElementById('messagesContainer');
                     cont.innerHTML = '';
                     snap.forEach(doc => {
                         const m = doc.data();
-                        const isAdmin = m.rank === "ADMIN";
+                        const isMe = m.userId === currentUser.uid;
+                        const rankClass = m.rank === "ADMIN" ? "admin-msg" : (m.rank === "VIP" ? "vip-msg" : "");
+                        const badgeColor = m.rank === "ADMIN" ? "bg-red-500" : (m.rank === "VIP" ? "bg-yellow-500" : "bg-green-500");
+                        
                         cont.innerHTML += `
-                            <div class="msg ${m.userId === currentUser.uid ? 'own' : ''} ${isAdmin ? 'admin-msg' : ''}">
-                                <div class="text-[9px] mb-1 font-bold ${isAdmin ? 'text-red-500' : 'text-green-500'}">
-                                    ${isAdmin ? '[ADMIN 💀]' : '[USER]'} ${m.userName}
+                            <div class="msg ${isMe ? 'own' : ''} ${rankClass}">
+                                <div class="flex items-center mb-1">
+                                    <span class="badge ${badgeColor} text-black">${m.rank}</span>
+                                    <span class="text-[10px] text-gray-400 font-bold">${m.userName}</span>
                                 </div>
-                                <div class="text-sm">${m.text}</div>
-                                ${m.fileUrl ? `<div class="mt-2 text-[10px]"><a href="${m.fileUrl}" target="_blank" class="text-blue-400 underline italic">Attachment Download</a></div>` : ''}
-                                ${adminMode ? `<button onclick="deleteMsg('${doc.id}')" class="text-[8px] text-red-500 block mt-1">DELETE</button>` : ''}
+                                <p class="text-sm leading-relaxed">${m.text}</p>
+                                ${m.fileUrl ? `<a href="${m.fileUrl}" target="_blank" class="block mt-2 p-2 bg-black/30 rounded text-[10px] text-blue-400">📥 Download Attachment</a>` : ''}
+                                ${isAdminMode ? `<button onclick="deleteMsg('${doc.id}')" class="text-[8px] text-red-500 mt-2">DELETE MESSAGE</button>` : ''}
                             </div>`;
                     });
                     cont.scrollTop = cont.scrollHeight;
@@ -165,7 +226,7 @@
         }
 
         async function deleteMsg(id) {
-            if(confirm("Delete permanently?")) {
+            if(confirm("Permanently delete?")) {
                 await db.collection('rooms').doc(currentRoom).collection('messages').doc(id).delete();
             }
         }
@@ -173,14 +234,14 @@
         async function uploadFile() {
             const file = document.getElementById('fileInput').files[0];
             if (!file || !currentRoom) return;
-            const storageRef = storage.ref(`uploads/${Date.now()}_${file.name}`);
-            const task = storageRef.put(file);
+            const ref = storage.ref(`uploads/${Date.now()}_${file.name}`);
+            const task = ref.put(file);
             task.on('state_changed', s => {
                 document.getElementById('uploadProgress').style.width = (s.bytesTransferred / s.totalBytes) * 100 + '%';
             }, null, async () => {
                 const url = await task.snapshot.ref.getDownloadURL();
                 document.getElementById('uploadProgress').style.width = '0';
-                sendMessage(`Uploaded File: ${file.name}`, url);
+                sendMessage(`Sent a file: ${file.name}`, url);
             });
         }
 
@@ -188,12 +249,13 @@
             const val = txt || document.getElementById('msgInput').value;
             if(!val.trim()) return;
             if(!txt) document.getElementById('msgInput').value = '';
+            
             await db.collection('rooms').doc(currentRoom).collection('messages').add({
                 text: val,
-                fileUrl: url,
+                fileUrl: url || null,
                 userId: currentUser.uid,
-                userName: adminMode ? "BLACK_OWNER" : `Anon_${currentUser.uid.slice(0,4)}`,
-                rank: adminMode ? "ADMIN" : "USER",
+                userName: isAdminMode ? "BLACK_OWNER 💀" : `User_${currentUser.uid.slice(0,4)}`,
+                rank: isAdminMode ? "ADMIN" : "USER",
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
         }
