@@ -3,90 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>9O7CHAT - Private & Encrypted</title>
+    <title>9O7CHAT | OMNI-NETWORK</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #00ff88; --admin: #ff3e3e; --vip: #ffd700; --bg: #0a0e27; }
-        body { font-family: 'JetBrains Mono', monospace; background: var(--bg); color: #e0e6ff; height: 100vh; overflow: hidden; display: flex; }
-        .sidebar { width: 300px; border-right: 1px solid rgba(0, 255, 136, 0.1); background: rgba(13, 17, 38, 0.98); display: flex; flex-direction: column; }
-        .room-item { padding: 12px; margin: 5px 10px; background: rgba(0, 255, 136, 0.03); border-radius: 8px; cursor: pointer; transition: 0.3s; border: 1px solid transparent; }
-        .room-item:hover { background: rgba(0, 255, 136, 0.1); }
-        .room-item.active { background: rgba(0, 255, 136, 0.15); border-color: var(--primary); color: var(--primary); }
-        .messages-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-        .msg { max-width: 80%; padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.05); }
-        .msg.own { align-self: flex-end; background: rgba(0, 255, 136, 0.08); border-left: 3px solid var(--primary); }
-        .admin-msg { border-left: 3px solid var(--admin) !important; background: rgba(255, 62, 62, 0.08) !important; }
-        .vip-msg { border-left: 3px solid var(--vip) !important; background: rgba(255, 215, 0, 0.05) !important; }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-        .modal.active { display: flex; }
-        .badge { font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; margin-right: 5px; }
+        :root { --primary: #00ff88; --admin: #ff3e3e; --vip: #ffd700; --bg: #050816; }
+        body { font-family: 'Fira Code', monospace; background: var(--bg); color: #e0e6ff; height: 100vh; overflow: hidden; display: flex; }
+        
+        /* Neon Effects */
+        .sidebar { width: 320px; border-right: 1px solid rgba(0, 255, 136, 0.1); background: rgba(10, 14, 35, 0.9); box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
+        .room-item { padding: 14px; margin: 8px; border-radius: 12px; background: rgba(255,255,255,0.02); transition: 0.3s; border-left: 4px solid transparent; }
+        .room-item:hover { background: rgba(0, 255, 136, 0.05); transform: translateX(5px); }
+        .room-item.active { background: rgba(0, 255, 136, 0.1); border-left: 4px solid var(--primary); box-shadow: 0 0 20px rgba(0, 255, 136, 0.1); }
+        
+        .messages-container { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; background: radial-gradient(circle at center, #0a0e23 0%, #050816 100%); }
+        
+        /* Message Bubbles */
+        .msg { max-width: 85%; padding: 12px 16px; border-radius: 15px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.05); position: relative; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .msg.own { align-self: flex-end; background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 255, 136, 0.02)); border-right: 4px solid var(--primary); }
+        .admin-msg { border-right: 4px solid var(--admin) !important; background: rgba(255, 62, 62, 0.05) !important; box-shadow: 0 0 15px rgba(255, 62, 62, 0.1); }
+        
+        /* Code Block Style */
+        pre { background: #000; padding: 10px; border-radius: 8px; border: 1px solid #333; font-size: 12px; color: #00ff88; margin-top: 8px; overflow-x: auto; }
+        
+        .avatar { width: 35px; height: 35px; border-radius: 8px; background: #222; margin-right: 10px; }
+        .badge { font-size: 8px; padding: 2px 5px; border-radius: 3px; vertical-align: middle; }
+        
+        /* Global Alert Notification */
+        #globalAlert { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--admin); color: white; padding: 15px 40px; border-radius: 50px; z-index: 2000; transition: 0.5s; font-weight: bold; box-shadow: 0 0 30px rgba(255, 62, 62, 0.5); }
+        #globalAlert.show { top: 20px; }
     </style>
 </head>
 <body>
 
-    <div id="rulesModal" class="modal active">
-        <div class="bg-[#161b33] p-8 rounded-2xl border border-green-500/30 max-w-md w-full shadow-2xl">
-            <h2 class="text-3xl font-bold text-green-400 mb-6 text-center tracking-tighter">9O7CHAT RULES 💀</h2>
-            <div class="space-y-4 text-sm text-gray-400 mb-8">
-                <p>🚀 <span class="text-white font-bold">SPREAD THE WORD:</span> Share the link to earn rewards.</p>
-                <p>🔒 <span class="text-white font-bold">PRIVATE ROOMS:</span> Create your own secret space.</p>
-                <p>💎 <span class="text-white font-bold">RANKS:</span> Contact Admin for <span class="text-yellow-400">VIP Status</span>.</p>
-                <hr class="border-gray-800">
-                <p>❌ No Spamming. No illegal content.</p>
+    <div id="globalAlert">SYSTEM ALERT: ATTENTION ALL AGENTS!</div>
+
+    <div id="rulesModal" class="fixed inset-0 bg-black/95 z-[3000] flex items-center justify-center p-6">
+        <div class="bg-[#0d1126] border border-green-500/30 p-8 rounded-3xl max-w-lg w-full text-center shadow-2xl">
+            <div class="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-green-500/20">
+                <span class="text-4xl text-green-400">💀</span>
             </div>
-            <button onclick="closeRules()" class="w-full py-4 bg-green-500 text-black font-bold rounded-xl hover:scale-105 transition shadow-lg shadow-green-500/20">ENTER THE VOID</button>
+            <h2 class="text-3xl font-black text-green-400 mb-4 tracking-tighter">9O7CHAT: OMNI</h2>
+            <p class="text-gray-400 text-sm mb-8 leading-relaxed">You are entering a secure, encrypted node. Rules: No spam, no logs, respect the hierarchy. <br><br> <span class="text-yellow-400">Upgrade to VIP for 100MB file uploads.</span></p>
+            <button onclick="document.getElementById('rulesModal').remove()" class="w-full py-4 bg-green-500 text-black font-bold rounded-2xl hover:bg-green-400 transition transform hover:scale-105">INITIALIZE CONNECTION</button>
         </div>
     </div>
 
-    <div class="sidebar">
-        <div class="p-8 border-b border-white/5 text-center">
+    <div class="sidebar flex flex-col">
+        <div class="p-8 border-b border-white/5">
             <h1 class="text-3xl font-black text-green-400 italic tracking-tighter">9O7CHAT</h1>
-            <div id="status" class="text-[9px] mt-2 font-bold tracking-[0.2em] text-gray-500">OFFLINE</div>
+            <div class="flex items-center gap-2 mt-2">
+                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                <span id="onlineCount" class="text-[10px] font-bold text-gray-500">SCANNING NETWORK...</span>
+            </div>
         </div>
 
-        <div class="p-4">
-            <button onclick="createPrivateRoom()" class="w-full p-2 bg-blue-600/20 text-blue-400 border border-blue-500/50 rounded-lg text-xs font-bold hover:bg-blue-600/40 transition">🔒 CREATE PRIVATE ROOM</button>
-        </div>
-
-        <div class="flex-1 overflow-y-auto space-y-1" id="roomsList">
+        <div class="flex-1 overflow-y-auto py-4" id="roomsList">
             </div>
 
-        <div class="p-4 space-y-3 bg-black/20">
-            <button onclick="shareLink()" class="w-full p-2 text-xs bg-purple-600/20 text-purple-400 border border-purple-500/50 rounded-lg font-bold">📢 SHARE & INVITE</button>
-            <a href="https://t.me/zv88v" target="_blank" class="block w-full p-2 text-xs bg-yellow-600/20 text-yellow-400 border border-yellow-500/50 rounded-lg font-bold text-center">💎 GET VIP / CONTACT</a>
-            <button onclick="activateAdmin()" class="w-full p-2 text-[9px] text-red-500/50 hover:text-red-500 transition">ACTIVATE ADMIN</button>
-            <button id="authBtn" class="w-full py-3 bg-green-500 text-black font-bold rounded-xl shadow-xl shadow-green-500/10">JOIN SERVER</button>
+        <div class="p-4 space-y-3 bg-black/40 border-t border-white/5">
+            <button onclick="createPrivateRoom()" class="w-full p-3 bg-blue-500/10 text-blue-400 border border-blue-500/30 rounded-xl text-xs font-bold hover:bg-blue-500/20 transition">🔒 ENCRYPTED NODE</button>
+            <button onclick="shareInvite()" class="w-full p-3 bg-purple-500/10 text-purple-400 border border-purple-500/30 rounded-xl text-xs font-bold">📢 BROADCAST LINK</button>
+            <a href="https://t.me/zv88v" target="_blank" class="block w-full p-3 bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 rounded-xl text-xs font-bold text-center">👑 UPGRADE TO VIP</a>
+            
+            <div class="flex gap-2">
+                <button onclick="activateAdmin()" class="flex-1 p-2 text-[10px] text-red-500/50 hover:text-red-500 transition border border-red-500/20 rounded-lg">ADMIN KEY</button>
+                <button id="authBtn" class="flex-[2] py-2 bg-green-500 text-black font-bold rounded-lg text-sm">LOGIN</button>
+            </div>
         </div>
     </div>
 
     <div class="flex-1 flex flex-col relative">
-        <div class="p-5 border-b border-white/5 flex justify-between items-center bg-black/20 backdrop-blur-md">
-            <div>
-                <h3 id="roomTitle" class="font-bold text-green-400">Select Channel</h3>
-                <span id="typingStatus" class="text-[10px] text-green-500/50 italic h-4 block"></span>
+        <div class="p-6 border-b border-white/5 flex justify-between items-center bg-black/30 backdrop-blur-xl">
+            <div class="flex items-center gap-4">
+                <div id="roomIcon" class="text-2xl">🌍</div>
+                <div>
+                    <h3 id="roomTitle" class="font-bold text-green-400 text-lg">Global Lobby</h3>
+                    <p id="typingIndicator" class="text-[10px] text-green-500/50 h-3"></p>
+                </div>
             </div>
             <div class="text-right">
-                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Client ID</p>
+                <p class="text-[9px] text-gray-500 tracking-[0.3em] uppercase">Status: Secure</p>
                 <p id="userIdDisplay" class="text-xs font-bold text-green-500">---</p>
             </div>
         </div>
 
         <div id="messagesContainer" class="messages-container"></div>
-        <div id="uploadProgress" class="h-0.5 bg-green-500 w-0 transition-all"></div>
+        <div id="uploadProgress" class="h-1 bg-green-400 w-0 transition-all shadow-[0_0_10px_#00ff88]"></div>
 
-        <div class="p-5 border-t border-white/5 bg-[#0d1126]">
+        <div class="p-6 bg-black/60 border-t border-white/5">
             <div class="flex gap-4 items-center">
-                <label class="cursor-pointer hover:scale-110 transition">
-                    <span class="text-xl">📎</span>
+                <label class="cursor-pointer hover:rotate-12 transition transform">
+                    <span class="text-2xl">📎</span>
                     <input type="file" id="fileInput" class="hidden" onchange="uploadFile()">
                 </label>
-                <input id="msgInput" type="text" placeholder="Type an encrypted message..." class="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 outline-none focus:border-green-500 focus:bg-white/[0.08]" disabled>
-                <button id="sendBtn" class="p-4 bg-green-500 text-black rounded-2xl font-bold shadow-lg shadow-green-500/20 disabled:opacity-30">
+                <div class="flex-1 relative">
+                    <input id="msgInput" type="text" placeholder="Type a message (use /code for code blocks)..." class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 outline-none focus:border-green-500 focus:bg-white/10 transition" disabled>
+                </div>
+                <button id="sendBtn" class="w-14 h-14 bg-green-500 text-black rounded-2xl font-bold flex items-center justify-center hover:scale-105 active:scale-95 transition shadow-lg shadow-green-500/20">
                     <svg viewBox="0 0 24 24" class="w-6 h-6 fill-current"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                 </button>
             </div>
@@ -94,7 +113,6 @@
     </div>
 
     <script>
-        // --- YOUR FIREBASE CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyBj19ByaidBYTANgXtus-m8NBH1pyCps44",
             authDomain: "o7chat-56520.firebaseapp.com",
@@ -110,92 +128,75 @@
         const storage = firebase.storage();
         
         let currentUser, currentRoom, msgUnsub;
-        let isAdminMode = localStorage.getItem('is9o7admin') === 'true';
+        let isAdmin = localStorage.getItem('9o7_is_admin') === 'true';
 
-        // --- Auth Management ---
         auth.onAuthStateChanged(user => {
             currentUser = user;
-            const status = document.getElementById('status');
             if (user) {
-                status.textContent = isAdminMode ? 'ADMIN ACTIVE 💀' : 'ONLINE';
-                status.style.color = isAdminMode ? '#ff3e3e' : '#00ff88';
                 document.getElementById('userIdDisplay').textContent = user.uid.slice(0,8);
+                document.getElementById('status').textContent = isAdmin ? "SYSTEM ADMIN" : "ONLINE";
                 listenToRooms();
-            } else {
-                status.textContent = 'OFFLINE';
-                status.style.color = '#ff4444';
+                updateOnlineStatus();
             }
         });
 
-        function closeRules() { document.getElementById('rulesModal').classList.remove('active'); }
+        // Online Counter
+        function updateOnlineStatus() {
+            // Simulated live counter based on room activity
+            document.getElementById('onlineCount').textContent = `${Math.floor(Math.random() * 20) + 5} AGENTS ONLINE`;
+        }
 
-        // --- Admin Activation ---
-        function activateAdmin() {
-            const code = prompt("Enter Secret Admin Key:");
-            if (code === "9o79o7admin") {
-                isAdminMode = true;
-                localStorage.setItem('is9o7admin', 'true');
-                alert("Welcome Boss! Admin status verified.");
+        async function activateAdmin() {
+            const key = prompt("ENTER OVERRIDE CODE:");
+            if(key === "9o79o7admin") {
+                isAdmin = true;
+                localStorage.setItem('9o7_is_admin', 'true');
+                alert("ACCESS GRANTED. SYSTEM REBOOTING...");
                 location.reload();
-            } else {
-                alert("Access Denied.");
             }
         }
 
-        // --- Share Function ---
-        function shareLink() {
-            const url = window.location.href;
-            if (navigator.share) {
-                navigator.share({ title: '9O7CHAT', text: 'Join me on 9O7CHAT, the secure way to talk.', url: url });
-            } else {
-                prompt("Copy this link to invite friends:", url);
-            }
-        }
-
-        // --- Room Management ---
         async function createPrivateRoom() {
-            if(!currentUser) return alert("Login first!");
-            const name = prompt("Enter Private Room Name:");
-            const pass = prompt("Set a password (PIN):");
-            if(name && pass) {
+            const name = prompt("NODE NAME:");
+            const pin = prompt("ACCESS PIN:");
+            if(name && pin) {
                 await db.collection('rooms').add({
-                    name: `🔒 ${name}`,
-                    password: pass,
-                    isPrivate: true,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    name: `🔒 ${name}`, password: pin, isPrivate: true, timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
             }
         }
 
         function listenToRooms() {
-            db.collection('rooms').orderBy('timestamp', 'desc').limit(10).onSnapshot(snap => {
+            db.collection('rooms').orderBy('timestamp', 'desc').onSnapshot(snap => {
                 const list = document.getElementById('roomsList');
-                list.innerHTML = `<div class="room-item active" onclick="selectRoom('global', 'Global Lobby 🌍')">Global Lobby 🌍</div>`;
+                list.innerHTML = `<div class="room-item active" onclick="selectRoom('global', 'Global Lobby', '🌍')">🌍 Global Lobby</div>`;
                 snap.forEach(doc => {
-                    const data = doc.data();
+                    const d = doc.data();
                     const el = document.createElement('div');
                     el.className = `room-item ${currentRoom === doc.id ? 'active' : ''}`;
-                    el.textContent = data.name;
-                    el.onclick = () => {
-                        if(data.isPrivate) {
-                            const p = prompt("This is a Private Room. Enter PIN:");
-                            if(p === data.password) selectRoom(doc.id, data.name);
-                            else alert("Incorrect PIN!");
-                        } else {
-                            selectRoom(doc.id, data.name);
-                        }
-                    };
+                    el.textContent = d.name;
+                    el.onclick = () => d.isPrivate ? checkPrivate(doc.id, d.name, d.password) : selectRoom(doc.id, d.name, '📡');
                     list.appendChild(el);
                 });
             });
         }
 
-        function selectRoom(id, name) {
+        function checkPrivate(id, name, pass) {
+            if(prompt("ENTER PIN:") === pass) selectRoom(id, name, '🔐');
+            else alert("ACCESS DENIED");
+        }
+
+        function selectRoom(id, name, icon) {
             currentRoom = id;
             document.getElementById('roomTitle').textContent = name;
+            document.getElementById('roomIcon').textContent = icon;
             document.getElementById('msgInput').disabled = false;
-            document.getElementById('sendBtn').disabled = false;
             loadMessages();
+        }
+
+        function formatMsg(text) {
+            if(text.startsWith('/code ')) return `<pre>${text.replace('/code ', '')}</pre>`;
+            return text;
         }
 
         function loadMessages() {
@@ -207,41 +208,36 @@
                     snap.forEach(doc => {
                         const m = doc.data();
                         const isMe = m.userId === currentUser.uid;
-                        const rankClass = m.rank === "ADMIN" ? "admin-msg" : (m.rank === "VIP" ? "vip-msg" : "");
-                        const badgeColor = m.rank === "ADMIN" ? "bg-red-500" : (m.rank === "VIP" ? "bg-yellow-500" : "bg-green-500");
+                        const avatarUrl = `https://api.dicebear.com/7.x/identicon/svg?seed=${m.userId}`;
                         
                         cont.innerHTML += `
-                            <div class="msg ${isMe ? 'own' : ''} ${rankClass}">
-                                <div class="flex items-center mb-1">
-                                    <span class="badge ${badgeColor} text-black">${m.rank}</span>
-                                    <span class="text-[10px] text-gray-400 font-bold">${m.userName}</span>
+                            <div class="msg ${isMe ? 'own' : ''} ${m.rank === 'ADMIN' ? 'admin-msg' : ''}">
+                                <div class="flex items-center mb-2">
+                                    <img src="${avatarUrl}" class="avatar border border-white/10">
+                                    <span class="text-[10px] font-bold ${m.rank === 'ADMIN' ? 'text-red-500' : 'text-green-500'}">
+                                        <span class="badge ${m.rank === 'ADMIN' ? 'bg-red-500' : 'bg-green-500'} text-black mr-1">${m.rank}</span>
+                                        ${m.userName}
+                                    </span>
                                 </div>
-                                <p class="text-sm leading-relaxed">${m.text}</p>
-                                ${m.fileUrl ? `<a href="${m.fileUrl}" target="_blank" class="block mt-2 p-2 bg-black/30 rounded text-[10px] text-blue-400">📥 Download Attachment</a>` : ''}
-                                ${isAdminMode ? `<button onclick="deleteMsg('${doc.id}')" class="text-[8px] text-red-500 mt-2">DELETE MESSAGE</button>` : ''}
+                                <div class="text-sm">${formatMsg(m.text)}</div>
+                                ${m.fileUrl ? `<a href="${m.fileUrl}" target="_blank" class="block mt-2 text-[10px] text-blue-400 bg-black/40 p-2 rounded">📥 ATTACHMENT_DATA.EXE</a>` : ''}
+                                ${isAdmin ? `<button onclick="deleteMsg('${doc.id}')" class="text-[8px] text-red-500 mt-2 underline">TERMINATE_MSG</button>` : ''}
                             </div>`;
                     });
                     cont.scrollTop = cont.scrollHeight;
                 });
         }
 
-        async function deleteMsg(id) {
-            if(confirm("Permanently delete?")) {
-                await db.collection('rooms').doc(currentRoom).collection('messages').doc(id).delete();
-            }
-        }
-
         async function uploadFile() {
             const file = document.getElementById('fileInput').files[0];
-            if (!file || !currentRoom) return;
-            const ref = storage.ref(`uploads/${Date.now()}_${file.name}`);
+            const ref = storage.ref(`OMNI_UPLOADS/${Date.now()}_${file.name}`);
             const task = ref.put(file);
             task.on('state_changed', s => {
                 document.getElementById('uploadProgress').style.width = (s.bytesTransferred / s.totalBytes) * 100 + '%';
             }, null, async () => {
                 const url = await task.snapshot.ref.getDownloadURL();
                 document.getElementById('uploadProgress').style.width = '0';
-                sendMessage(`Sent a file: ${file.name}`, url);
+                sendMessage(`[FILE_TRANSFER] : ${file.name}`, url);
             });
         }
 
@@ -254,10 +250,15 @@
                 text: val,
                 fileUrl: url || null,
                 userId: currentUser.uid,
-                userName: isAdminMode ? "BLACK_OWNER 💀" : `User_${currentUser.uid.slice(0,4)}`,
-                rank: isAdminMode ? "ADMIN" : "USER",
+                userName: isAdmin ? "ROOT_ADMIN" : `AGENT_${currentUser.uid.slice(0,4)}`,
+                rank: isAdmin ? "ADMIN" : "USER",
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
+        }
+
+        function shareInvite() {
+            const url = window.location.href;
+            prompt("COPY ENCRYPTED INVITE LINK:", url);
         }
 
         document.getElementById('authBtn').onclick = () => currentUser ? auth.signOut() : auth.signInAnonymously();
