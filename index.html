@@ -1001,8 +1001,10 @@
                 vipRef.forEach(doc => {
                     vipUsers[doc.id] = doc.data().customName || true;
                 });
+                return Promise.resolve();
             } catch (error) {
                 console.log('VIP load error:', error);
+                return Promise.resolve();
             }
         }
 
@@ -1049,22 +1051,27 @@
             }
 
             try {
-                // Find room by name
-                const roomsSnap = await db.collection('rooms')
-                    .where('name', '==', roomName)
-                    .get();
+                // Find room by searching all rooms
+                let foundRoomId = null;
+                let foundRoomName = null;
+                
+                const roomsSnap = await db.collection('rooms').get();
+                roomsSnap.forEach(doc => {
+                    if (doc.data().name.toLowerCase().includes(roomName.toLowerCase())) {
+                        foundRoomId = doc.id;
+                        foundRoomName = doc.data().name;
+                    }
+                });
 
-                if (roomsSnap.empty) {
-                    showToast('Room not found', 'error');
+                if (!foundRoomId) {
+                    showToast('Room not found. Check the exact name.', 'error');
+                    console.log('Available rooms:', roomsSnap.docs.map(d => d.data().name));
                     return;
                 }
 
-                const roomDoc = roomsSnap.docs[0];
-                const roomId = roomDoc.id;
-
-                if (confirm(`Delete room "${roomName}"? All messages will be lost!`)) {
+                if (confirm(`Delete room "${foundRoomName}"? All messages will be lost!`)) {
                     // Delete all messages
-                    const msgs = await db.collection('rooms').doc(roomId).collection('messages').get();
+                    const msgs = await db.collection('rooms').doc(foundRoomId).collection('messages').get();
                     const batch = db.batch();
                     msgs.forEach(doc => {
                         batch.delete(doc.ref);
@@ -1072,13 +1079,15 @@
                     await batch.commit();
 
                     // Delete room
-                    await db.collection('rooms').doc(roomId).delete();
+                    await db.collection('rooms').doc(foundRoomId).delete();
                     showToast('Room deleted successfully ✓', 'success');
                     document.getElementById('roomNameInput').value = '';
                     updateRoomsList();
+                    listenToRooms();
                 }
             } catch (error) {
                 showToast(`Error: ${error.message}`, 'error');
+                console.error('Delete room error:', error);
             }
         }
 
@@ -1092,41 +1101,62 @@
             }
 
             try {
-                // Find user by name in messages
-                const messagesSnap = await db.collectionGroup('messages')
-                    .where('userName', '==', userName)
-                    .get();
+                // Search through all rooms' messages to find user
+                let foundUserId = null;
+                let foundUserName = null;
+                
+                const roomsSnap = await db.collection('rooms').get();
+                
+                for (const roomDoc of roomsSnap.docs) {
+                    const messagesSnap = await db
+                        .collection('rooms')
+                        .doc(roomDoc.id)
+                        .collection('messages')
+                        .get();
+                    
+                    for (const msgDoc of messagesSnap.docs) {
+                        const msgData = msgDoc.data();
+                        if (msgData.userName && msgData.userName.toLowerCase().includes(userName.toLowerCase())) {
+                            foundUserId = msgData.userId;
+                            foundUserName = msgData.userName;
+                            break;
+                        }
+                    }
+                    if (foundUserId) break;
+                }
 
-                if (messagesSnap.empty) {
-                    showToast('User not found', 'error');
+                if (!foundUserId) {
+                    showToast('User not found. They must have sent at least one message.', 'error');
                     return;
                 }
 
-                const userId = messagesSnap.docs[0].data().userId;
-
                 // Check if already VIP
-                if (isUserVIP(userId)) {
-                    showToast('User is already VIP', 'error');
+                if (isUserVIP(foundUserId)) {
+                    showToast(`${foundUserName} is already VIP!`, 'error');
                     return;
                 }
 
                 // Make VIP
-                await db.collection('vip_users').doc(userId).set({
-                    customName: customName || userName,
+                const vipName = customName || foundUserName;
+                await db.collection('vip_users').doc(foundUserId).set({
+                    customName: vipName,
                     grantedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    originalName: userName
+                    originalName: foundUserName
                 });
 
-                vipUsers[userId] = customName || userName;
-                localStorage.setItem(`avatar_${userId}`, vipAvatars[Math.floor(Math.random() * vipAvatars.length)]);
+                vipUsers[foundUserId] = vipName;
+                const newAvatar = vipAvatars[Math.floor(Math.random() * vipAvatars.length)];
+                userAvatars[foundUserId] = newAvatar;
+                localStorage.setItem(`avatar_${foundUserId}`, newAvatar);
 
-                showToast(`${userName} is now VIP! 👑`, 'success');
+                showToast(`✓ ${foundUserName} is now VIP as "${vipName}" 👑`, 'success');
                 document.getElementById('vipUserNameInput').value = '';
                 document.getElementById('vipCustomNameInput').value = '';
                 updateUsersList();
                 loadMessages();
             } catch (error) {
                 showToast(`Error: ${error.message}`, 'error');
+                console.error('Make VIP error:', error);
             }
         }
 
@@ -1139,13 +1169,17 @@
             }
 
             try {
-                // Find VIP user by custom name
+                // Find VIP user by custom name or original name
                 const vipSnap = await db.collection('vip_users').get();
                 let foundUserId = null;
+                let foundName = null;
 
                 vipSnap.forEach(doc => {
-                    if (doc.data().customName === vipName || doc.data().originalName === vipName) {
+                    const data = doc.data();
+                    if ((data.customName && data.customName.toLowerCase().includes(vipName.toLowerCase())) ||
+                        (data.originalName && data.originalName.toLowerCase().includes(vipName.toLowerCase()))) {
                         foundUserId = doc.id;
+                        foundName = data.customName || data.originalName;
                     }
                 });
 
@@ -1157,14 +1191,16 @@
                 // Remove VIP
                 await db.collection('vip_users').doc(foundUserId).delete();
                 delete vipUsers[foundUserId];
+                delete userAvatars[foundUserId];
                 localStorage.removeItem(`avatar_${foundUserId}`);
 
-                showToast('VIP status revoked ✓', 'success');
+                showToast(`✓ VIP status removed from "${foundName}" `, 'success');
                 document.getElementById('removeVipNameInput').value = '';
                 updateUsersList();
                 loadMessages();
             } catch (error) {
                 showToast(`Error: ${error.message}`, 'error');
+                console.error('Remove VIP error:', error);
             }
         }
 
@@ -1341,115 +1377,119 @@
                     .orderBy('timestamp', 'asc').limit(50).onSnapshot(snap => {
                         const cont = document.getElementById('messagesContainer');
                         cont.innerHTML = '';
-                        snap.forEach(doc => {
-                            const m = doc.data();
-                            const isMe = m.userId === currentUser.uid;
-                            const isVIP = isUserVIP(m.userId);
-                            const vipName = getVIPName(m.userId);
-                            
-                            // Determine rank and styling
-                            let rank = m.rank || "USER";
-                            let msgClass = '';
-                            let badgeColor = 'bg-green-500';
-                            
-                            if (rank === "ADMIN") {
-                                msgClass = "admin-msg";
-                                badgeColor = "bg-red-500";
-                            } else if (isVIP) {
-                                msgClass = "vip-message";
-                                badgeColor = "bg-yellow-500";
-                                rank = "VIP";
-                            }
-                            
-                            // Load or create avatar
-                            loadAvatarFromStorage(m.userId);
-                            const avatar = getOrCreateAvatar(m.userId, rank);
-                            
-                            const msgDiv = document.createElement('div');
-                            msgDiv.className = `msg ${isMe ? 'own' : ''} ${msgClass}`;
-                            
-                            const headerDiv = document.createElement('div');
-                            headerDiv.className = 'flex gap-3 mb-2';
-                            
-                            // Avatar
-                            const avatarDiv = document.createElement('div');
-                            avatarDiv.className = `avatar ${rank === "ADMIN" ? 'admin' : (isVIP ? 'vip' : '')}`;
-                            avatarDiv.textContent = avatar;
-                            headerDiv.appendChild(avatarDiv);
-                            
-                            // User info
-                            const userInfoDiv = document.createElement('div');
-                            userInfoDiv.className = 'user-info flex-1';
-                            
-                            const userHeaderDiv = document.createElement('div');
-                            userHeaderDiv.className = 'flex items-center gap-2 flex-wrap';
-                            
-                            const username = document.createElement('span');
-                            username.className = isVIP ? 'username-display vip-username' : 'username-display';
-                            username.textContent = isVIP && vipName ? sanitizeHTML(vipName) : sanitizeHTML(m.userName);
-                            userHeaderDiv.appendChild(username);
-                            
-                            const badge = document.createElement('span');
-                            badge.className = `badge ${badgeColor} text-black`;
-                            badge.textContent = rank;
-                            userHeaderDiv.appendChild(badge);
-                            
-                            if (rank === "ADMIN") {
-                                const adminLabel = document.createElement('span');
-                                adminLabel.className = 'admin-label';
-                                adminLabel.textContent = '⚡ Admin Authority';
-                                userHeaderDiv.appendChild(adminLabel);
-                            } else if (isVIP) {
-                                const vipLabel = document.createElement('span');
-                                vipLabel.className = 'badge bg-yellow-500 text-black';
-                                vipLabel.textContent = '👑 VIP';
-                                userHeaderDiv.appendChild(vipLabel);
-                            }
-                            
-                            userInfoDiv.appendChild(userHeaderDiv);
-                            
-                            headerDiv.appendChild(userInfoDiv);
-                            
-                            const textDiv = document.createElement('p');
-                            textDiv.className = isVIP ? 'msg-text vip-text' : 'msg-text';
-                            textDiv.textContent = m.text;
-                            
-                            msgDiv.appendChild(headerDiv);
-                            msgDiv.appendChild(textDiv);
-                            
-                            if (m.fileUrl) {
-                                const fileLink = document.createElement('a');
-                                fileLink.href = m.fileUrl;
-                                fileLink.target = '_blank';
-                                fileLink.className = 'block mt-2 p-2 bg-black/40 rounded text-[11px] text-blue-300 hover:text-blue-200 hover:bg-black/60 transition';
-                                fileLink.textContent = '📥 Download Attachment';
-                                msgDiv.appendChild(fileLink);
-                            }
+                        
+                        // Reload VIP status first
+                        loadVIPStatus().then(() => {
+                            snap.forEach(doc => {
+                                const m = doc.data();
+                                const isMe = m.userId === currentUser.uid;
+                                const isVIP = isUserVIP(m.userId);
+                                const vipName = getVIPName(m.userId);
+                                
+                                // Determine rank and styling
+                                let rank = m.rank || "USER";
+                                let msgClass = '';
+                                let badgeColor = 'bg-green-500';
+                                
+                                if (rank === "ADMIN") {
+                                    msgClass = "admin-msg";
+                                    badgeColor = "bg-red-500";
+                                } else if (isVIP) {
+                                    msgClass = "vip-message";
+                                    badgeColor = "bg-yellow-500";
+                                    rank = "VIP";
+                                }
+                                
+                                // Load or create avatar
+                                loadAvatarFromStorage(m.userId);
+                                const avatar = getOrCreateAvatar(m.userId, rank);
+                                
+                                const msgDiv = document.createElement('div');
+                                msgDiv.className = `msg ${isMe ? 'own' : ''} ${msgClass}`;
+                                
+                                const headerDiv = document.createElement('div');
+                                headerDiv.className = 'flex gap-3 mb-2';
+                                
+                                // Avatar
+                                const avatarDiv = document.createElement('div');
+                                avatarDiv.className = `avatar ${rank === "ADMIN" ? 'admin' : (isVIP ? 'vip' : '')}`;
+                                avatarDiv.textContent = avatar;
+                                headerDiv.appendChild(avatarDiv);
+                                
+                                // User info
+                                const userInfoDiv = document.createElement('div');
+                                userInfoDiv.className = 'user-info flex-1';
+                                
+                                const userHeaderDiv = document.createElement('div');
+                                userHeaderDiv.className = 'flex items-center gap-2 flex-wrap';
+                                
+                                const username = document.createElement('span');
+                                username.className = isVIP ? 'username-display vip-username' : 'username-display';
+                                username.textContent = isVIP && vipName ? sanitizeHTML(vipName) : sanitizeHTML(m.userName);
+                                userHeaderDiv.appendChild(username);
+                                
+                                const badge = document.createElement('span');
+                                badge.className = `badge ${badgeColor} text-black`;
+                                badge.textContent = rank;
+                                userHeaderDiv.appendChild(badge);
+                                
+                                if (rank === "ADMIN") {
+                                    const adminLabel = document.createElement('span');
+                                    adminLabel.className = 'admin-label';
+                                    adminLabel.textContent = '⚡ Admin Authority';
+                                    userHeaderDiv.appendChild(adminLabel);
+                                } else if (isVIP) {
+                                    const vipLabel = document.createElement('span');
+                                    vipLabel.className = 'badge bg-yellow-500 text-black';
+                                    vipLabel.textContent = '👑 VIP';
+                                    userHeaderDiv.appendChild(vipLabel);
+                                }
+                                
+                                userInfoDiv.appendChild(userHeaderDiv);
+                                
+                                headerDiv.appendChild(userInfoDiv);
+                                
+                                const textDiv = document.createElement('p');
+                                textDiv.className = isVIP ? 'msg-text vip-text' : 'msg-text';
+                                textDiv.textContent = m.text;
+                                
+                                msgDiv.appendChild(headerDiv);
+                                msgDiv.appendChild(textDiv);
+                                
+                                if (m.fileUrl) {
+                                    const fileLink = document.createElement('a');
+                                    fileLink.href = m.fileUrl;
+                                    fileLink.target = '_blank';
+                                    fileLink.className = 'block mt-2 p-2 bg-black/40 rounded text-[11px] text-blue-300 hover:text-blue-200 hover:bg-black/60 transition';
+                                    fileLink.textContent = '📥 Download Attachment';
+                                    msgDiv.appendChild(fileLink);
+                                }
 
-                            if (m.timestamp) {
-                                const timeDiv = document.createElement('div');
-                                timeDiv.className = 'timestamp ml-12';
-                                timeDiv.textContent = formatTime(m.timestamp);
-                                msgDiv.appendChild(timeDiv);
-                            }
-                            
-                            if (isAdminMode) {
-                                const actionsDiv = document.createElement('div');
-                                actionsDiv.className = 'msg-actions mt-2';
-                                const deleteBtn = document.createElement('button');
-                                deleteBtn.className = 'delete-btn text-red-400/60 hover:text-red-400 text-[10px] font-bold transition';
-                                deleteBtn.textContent = '🗑️ DELETE';
-                                deleteBtn.onclick = () => {
-                                    pendingDeleteId = doc.id;
-                                    document.getElementById('confirmDeleteModal').classList.add('active');
-                                };
-                                actionsDiv.appendChild(deleteBtn);
-                                msgDiv.appendChild(actionsDiv);
-                            }
-                            
-                            cont.appendChild(msgDiv);
+                                if (m.timestamp) {
+                                    const timeDiv = document.createElement('div');
+                                    timeDiv.className = 'timestamp ml-12';
+                                    timeDiv.textContent = formatTime(m.timestamp);
+                                    msgDiv.appendChild(timeDiv);
+                                }
+                                
+                                if (isAdminMode) {
+                                    const actionsDiv = document.createElement('div');
+                                    actionsDiv.className = 'msg-actions mt-2';
+                                    const deleteBtn = document.createElement('button');
+                                    deleteBtn.className = 'delete-btn text-red-400/60 hover:text-red-400 text-[10px] font-bold transition';
+                                    deleteBtn.textContent = '🗑️ DELETE';
+                                    deleteBtn.onclick = () => {
+                                        pendingDeleteId = doc.id;
+                                        document.getElementById('confirmDeleteModal').classList.add('active');
+                                    };
+                                    actionsDiv.appendChild(deleteBtn);
+                                    msgDiv.appendChild(actionsDiv);
+                                }
+                                
+                                cont.appendChild(msgDiv);
+                            });
+                            cont.scrollTop = cont.scrollHeight;
                         });
-                        cont.scrollTop = cont.scrollHeight;
                     }, error => showToast(`Error: ${error.message}`, 'error'));
             } catch (error) {
                 showToast(`Error: ${error.message}`, 'error');
