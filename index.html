@@ -327,7 +327,7 @@
             position: fixed;
             bottom: 24px;
             left: 24px;
-            width: 300px;
+            width: 320px;
             background: rgba(22, 27, 51, 0.95);
             border: 2px solid rgba(255, 62, 62, 0.4);
             border-radius: 16px;
@@ -335,7 +335,7 @@
             box-shadow: 0 8px 32px rgba(255, 62, 62, 0.2);
             backdrop-filter: blur(10px);
             z-index: 100;
-            max-height: 500px;
+            max-height: 600px;
             overflow-y: auto;
             animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
@@ -344,32 +344,37 @@
             display: none;
         }
 
-        .admin-panel-header {
+        .admin-toggle-btn {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, rgba(255, 62, 62, 0.9) 0%, rgba(255, 62, 62, 0.7) 100%);
+            border: 2px solid rgba(255, 62, 62, 0.6);
+            border-radius: 50%;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255, 62, 62, 0.2);
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 99;
+            box-shadow: 0 4px 16px rgba(255, 62, 62, 0.3);
         }
 
-        .admin-panel-header h3 {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--admin);
-            margin: 0;
+        .admin-toggle-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 24px rgba(255, 62, 62, 0.5);
         }
 
-        .admin-panel-toggle {
-            cursor: pointer;
-            font-size: 12px;
-            margin-left: auto;
-            opacity: 0.6;
-            transition: opacity 0.3s;
+        .admin-toggle-btn:active {
+            transform: scale(0.95);
         }
 
-        .admin-panel-toggle:hover {
-            opacity: 1;
+        .admin-toggle-btn.hidden {
+            display: none;
         }
 
         .admin-section {
@@ -800,40 +805,54 @@
         </div>
     </div>
 
-    <!-- Admin Control Panel -->
+    <!-- Admin Toggle Button -->
+    <button id="adminToggleBtn" class="admin-toggle-btn hidden" onclick="toggleAdminPanel()">⚙️</button>
+
+    <!-- Admin Control Panel Modal -->
     <div id="adminPanel" class="admin-panel hidden">
         <div class="admin-panel-header">
-            <h3>⚔️ ADMIN PANEL</h3>
+            <h3>⚔️ ADMIN CONSOLE</h3>
             <span class="admin-panel-toggle" onclick="toggleAdminPanel()">✕</span>
         </div>
 
-        <!-- Manage Rooms -->
+        <!-- Delete Room by Name -->
         <div class="admin-section">
             <div class="admin-section-title">🗑️ Delete Room</div>
-            <input type="text" id="roomIdInput" class="admin-input" placeholder="Room ID to delete...">
-            <button class="admin-btn danger" onclick="adminDeleteRoom()">DELETE ROOM</button>
+            <input type="text" id="roomNameInput" class="admin-input" placeholder="Room name...">
+            <div id="roomSuggestions" class="admin-users-list" style="display: none; margin-bottom: 8px;"></div>
+            <button class="admin-btn danger" onclick="adminDeleteRoomByName()">DELETE ROOM</button>
         </div>
 
-        <!-- Manage Users / VIP -->
+        <!-- Make User VIP -->
         <div class="admin-section">
             <div class="admin-section-title">👑 Make User VIP</div>
-            <input type="text" id="userIdInput" class="admin-input" placeholder="User ID...">
-            <input type="text" id="userNameInput" class="admin-input" placeholder="Custom VIP Name...">
-            <button class="admin-btn" onclick="adminMakeVIP()">GRANT VIP</button>
+            <input type="text" id="vipUserNameInput" class="admin-input" placeholder="User name...">
+            <div id="userSuggestions" class="admin-users-list" style="display: none; margin-bottom: 8px;"></div>
+            <input type="text" id="vipCustomNameInput" class="admin-input" placeholder="Custom VIP name...">
+            <button class="admin-btn" onclick="adminMakeVIPByName()">GRANT VIP</button>
         </div>
 
         <!-- Remove VIP -->
         <div class="admin-section">
-            <div class="admin-section-title">❌ Remove VIP Status</div>
-            <input type="text" id="removeVipInput" class="admin-input" placeholder="User ID...">
-            <button class="admin-btn danger" onclick="adminRemoveVIP()">REVOKE VIP</button>
+            <div class="admin-section-title">❌ Remove VIP</div>
+            <input type="text" id="removeVipNameInput" class="admin-input" placeholder="VIP username...">
+            <div id="vipUsersList" class="admin-users-list" style="display: none; margin-bottom: 8px;"></div>
+            <button class="admin-btn danger" onclick="adminRemoveVIPByName()">REVOKE VIP</button>
         </div>
 
         <!-- Online Users -->
         <div class="admin-section">
-            <div class="admin-section-title">👥 Online Users</div>
+            <div class="admin-section-title">👥 Active Users</div>
             <div class="admin-users-list" id="onlineUsersList">
                 <div class="admin-user-item" style="color: rgba(224, 230, 255, 0.5);">No users online</div>
+            </div>
+        </div>
+
+        <!-- Active Rooms -->
+        <div class="admin-section">
+            <div class="admin-section-title">🏠 Active Rooms</div>
+            <div class="admin-users-list" id="activeRoomsList">
+                <div class="admin-user-item" style="color: rgba(224, 230, 255, 0.5);">No rooms</div>
             </div>
         </div>
     </div>
@@ -987,75 +1006,162 @@
             }
         }
 
+        let usersList = {}; // Map of user names to IDs and data
+        let roomsList = {}; // Map of room names to IDs
+
         function toggleAdminPanel() {
             const panel = document.getElementById('adminPanel');
             panel.classList.toggle('hidden');
         }
 
-        async function adminDeleteRoom() {
-            const roomId = document.getElementById('roomIdInput').value.trim();
-            if (!roomId) {
-                showToast('Enter room ID', 'error');
+        function updateUsersList() {
+            if (!isAdminMode) return;
+            
+            usersList = {};
+            // Collect users from messages
+            db.collectionGroup('messages').get().then(snap => {
+                snap.forEach(doc => {
+                    const msg = doc.data();
+                    usersList[msg.userId] = {
+                        name: msg.userName,
+                        isVIP: isUserVIP(msg.userId)
+                    };
+                });
+            }).catch(err => console.log('Error:', err));
+        }
+
+        function updateRoomsList() {
+            if (!isAdminMode) return;
+            
+            roomsList = {};
+            db.collection('rooms').get().then(snap => {
+                snap.forEach(doc => {
+                    roomsList[doc.id] = doc.data().name;
+                });
+            }).catch(err => console.log('Error:', err));
+        }
+
+        async function adminDeleteRoomByName() {
+            const roomName = document.getElementById('roomNameInput').value.trim();
+            if (!roomName) {
+                showToast('Enter room name', 'error');
                 return;
             }
-            if (confirm('Delete this room? All messages will be lost!')) {
-                try {
-                    // Delete all messages in the room
+
+            try {
+                // Find room by name
+                const roomsSnap = await db.collection('rooms')
+                    .where('name', '==', roomName)
+                    .get();
+
+                if (roomsSnap.empty) {
+                    showToast('Room not found', 'error');
+                    return;
+                }
+
+                const roomDoc = roomsSnap.docs[0];
+                const roomId = roomDoc.id;
+
+                if (confirm(`Delete room "${roomName}"? All messages will be lost!`)) {
+                    // Delete all messages
                     const msgs = await db.collection('rooms').doc(roomId).collection('messages').get();
                     const batch = db.batch();
                     msgs.forEach(doc => {
                         batch.delete(doc.ref);
                     });
                     await batch.commit();
-                    
-                    // Delete the room
+
+                    // Delete room
                     await db.collection('rooms').doc(roomId).delete();
                     showToast('Room deleted successfully ✓', 'success');
-                    document.getElementById('roomIdInput').value = '';
-                } catch (error) {
-                    showToast(`Error: ${error.message}`, 'error');
+                    document.getElementById('roomNameInput').value = '';
+                    updateRoomsList();
                 }
+            } catch (error) {
+                showToast(`Error: ${error.message}`, 'error');
             }
         }
 
-        async function adminMakeVIP() {
-            const userId = document.getElementById('userIdInput').value.trim();
-            const customName = document.getElementById('userNameInput').value.trim();
-            if (!userId) {
-                showToast('Enter user ID', 'error');
+        async function adminMakeVIPByName() {
+            const userName = document.getElementById('vipUserNameInput').value.trim();
+            const customName = document.getElementById('vipCustomNameInput').value.trim();
+
+            if (!userName) {
+                showToast('Enter user name', 'error');
                 return;
             }
+
             try {
+                // Find user by name in messages
+                const messagesSnap = await db.collectionGroup('messages')
+                    .where('userName', '==', userName)
+                    .get();
+
+                if (messagesSnap.empty) {
+                    showToast('User not found', 'error');
+                    return;
+                }
+
+                const userId = messagesSnap.docs[0].data().userId;
+
+                // Check if already VIP
+                if (isUserVIP(userId)) {
+                    showToast('User is already VIP', 'error');
+                    return;
+                }
+
+                // Make VIP
                 await db.collection('vip_users').doc(userId).set({
-                    customName: customName || true,
-                    grantedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    customName: customName || userName,
+                    grantedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    originalName: userName
                 });
-                
-                vipUsers[userId] = customName || true;
+
+                vipUsers[userId] = customName || userName;
                 localStorage.setItem(`avatar_${userId}`, vipAvatars[Math.floor(Math.random() * vipAvatars.length)]);
-                
-                showToast(`User granted VIP status! 👑`, 'success');
-                document.getElementById('userIdInput').value = '';
-                document.getElementById('userNameInput').value = '';
+
+                showToast(`${userName} is now VIP! 👑`, 'success');
+                document.getElementById('vipUserNameInput').value = '';
+                document.getElementById('vipCustomNameInput').value = '';
+                updateUsersList();
                 loadMessages();
             } catch (error) {
                 showToast(`Error: ${error.message}`, 'error');
             }
         }
 
-        async function adminRemoveVIP() {
-            const userId = document.getElementById('removeVipInput').value.trim();
-            if (!userId) {
-                showToast('Enter user ID', 'error');
+        async function adminRemoveVIPByName() {
+            const vipName = document.getElementById('removeVipNameInput').value.trim();
+
+            if (!vipName) {
+                showToast('Enter VIP name', 'error');
                 return;
             }
+
             try {
-                await db.collection('vip_users').doc(userId).delete();
-                delete vipUsers[userId];
-                localStorage.removeItem(`avatar_${userId}`);
-                
-                showToast('VIP status revoked', 'success');
-                document.getElementById('removeVipInput').value = '';
+                // Find VIP user by custom name
+                const vipSnap = await db.collection('vip_users').get();
+                let foundUserId = null;
+
+                vipSnap.forEach(doc => {
+                    if (doc.data().customName === vipName || doc.data().originalName === vipName) {
+                        foundUserId = doc.id;
+                    }
+                });
+
+                if (!foundUserId) {
+                    showToast('VIP user not found', 'error');
+                    return;
+                }
+
+                // Remove VIP
+                await db.collection('vip_users').doc(foundUserId).delete();
+                delete vipUsers[foundUserId];
+                localStorage.removeItem(`avatar_${foundUserId}`);
+
+                showToast('VIP status revoked ✓', 'success');
+                document.getElementById('removeVipNameInput').value = '';
+                updateUsersList();
                 loadMessages();
             } catch (error) {
                 showToast(`Error: ${error.message}`, 'error');
@@ -1095,6 +1201,8 @@
         auth.onAuthStateChanged(user => {
             currentUser = user;
             const status = document.getElementById('status');
+            const toggleBtn = document.getElementById('adminToggleBtn');
+            
             if (user) {
                 loadVIPStatus();
                 loadAvatarFromStorage(user.uid);
@@ -1109,9 +1217,14 @@
                 status.classList.add('online');
                 document.getElementById('userIdDisplay').textContent = user.uid.slice(0, 8);
                 
-                // Show admin panel if admin mode
+                // Show admin toggle button if admin mode
                 if (isAdminMode) {
-                    document.getElementById('adminPanel').classList.remove('hidden');
+                    toggleBtn.classList.remove('hidden');
+                    updateUsersList();
+                    updateRoomsList();
+                } else {
+                    toggleBtn.classList.add('hidden');
+                    document.getElementById('adminPanel').classList.add('hidden');
                 }
                 
                 listenToRooms();
@@ -1119,6 +1232,7 @@
                 status.textContent = 'OFFLINE';
                 status.classList.remove('online');
                 document.getElementById('roomsList').innerHTML = '';
+                toggleBtn.classList.add('hidden');
                 document.getElementById('adminPanel').classList.add('hidden');
             }
         });
@@ -1135,11 +1249,12 @@
                 localStorage.setItem('is9o7admin', 'true');
                 showToast('Welcome Boss! Admin status verified.', 'success');
                 
-                // Show admin panel
-                document.getElementById('adminPanel').classList.remove('hidden');
+                // Show admin toggle button immediately
+                document.getElementById('adminToggleBtn').classList.remove('hidden');
+                updateUsersList();
+                updateRoomsList();
                 
-                // Reload for full admin experience
-                setTimeout(() => location.reload(), 1000);
+                setTimeout(() => location.reload(), 800);
             } else {
                 showToast('Access Denied.', 'error');
             }
