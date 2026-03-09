@@ -1264,6 +1264,11 @@
                 }
                 
                 listenToRooms();
+                
+                // Auto-select Global Lobby after a short delay
+                setTimeout(() => {
+                    selectRoom('global', 'Global Lobby 🌍');
+                }, 500);
             } else {
                 status.textContent = 'OFFLINE';
                 status.classList.remove('online');
@@ -1367,6 +1372,20 @@
             document.getElementById('roomTitle').textContent = sanitizeHTML(name);
             document.getElementById('msgInput').disabled = false;
             document.getElementById('sendBtn').disabled = false;
+            
+            // Ensure room exists in database
+            if (id === 'global') {
+                db.collection('rooms').doc('global').get().then(doc => {
+                    if (!doc.exists) {
+                        db.collection('rooms').doc('global').set({
+                            name: 'Global Lobby 🌍',
+                            isPrivate: false,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        }).catch(err => console.log('Create global room error:', err));
+                    }
+                }).catch(err => console.log('Check global room error:', err));
+            }
+            
             loadMessages();
         }
 
@@ -1544,20 +1563,32 @@
         }
 
         async function sendMessage(txt = null, url = null) {
-            const val = txt || document.getElementById('msgInput').value;
-            if (!val.trim()) {
+            const msgInput = document.getElementById('msgInput');
+            const val = txt || msgInput.value;
+            
+            // Debug log
+            console.log('Sending message:', { val, trim: val.trim(), currentRoom, currentUser: currentUser?.uid });
+            
+            if (!val || !val.trim()) {
                 showToast('Message cannot be empty', 'error');
                 return;
             }
+            
             if (val.trim().length > 1000) {
                 showToast('Message too long (max 1000 chars)', 'error');
                 return;
             }
+            
             if (!currentRoom) {
                 showToast('Select a room first', 'error');
                 return;
             }
-            if (!txt) document.getElementById('msgInput').value = '';
+            
+            if (!currentUser) {
+                showToast('You must be logged in', 'error');
+                return;
+            }
+            
             try {
                 await db.collection('rooms').doc(currentRoom).collection('messages').add({
                     text: val.trim(),
@@ -1567,8 +1598,15 @@
                     rank: isAdminMode ? "ADMIN" : "USER",
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
+                
+                // Clear input only if not txt parameter
+                if (!txt) {
+                    msgInput.value = '';
+                }
+                showToast('Message sent ✓', 'success');
             } catch (error) {
                 showToast(`Error: ${error.message}`, 'error');
+                console.error('Send message error:', error);
             }
         }
 
@@ -1580,8 +1618,19 @@
                 auth.signInAnonymously().catch(err => showToast(`Error: ${err.message}`, 'error'));
             }
         };
-        document.getElementById('sendBtn').onclick = () => sendMessage();
-        document.getElementById('msgInput').onkeypress = e => e.key === 'Enter' && !e.shiftKey && sendMessage();
+        
+        document.getElementById('sendBtn').onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            sendMessage();
+        };
+        
+        document.getElementById('msgInput').onkeypress = (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        };
     </script>
 </body>
 </html>
